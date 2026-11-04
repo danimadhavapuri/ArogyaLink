@@ -7,6 +7,8 @@ import { getOrders, getOrderById, addOrders } from './data/store.js';
 import { generateExpiringToken, verifyExpiringToken } from './services/tokenService.js';
 import { recordAccessLog, fetchAllAuditLogs } from './services/auditService.js';
 import { parseLISCSV } from './services/csvParser.js';
+import { generateReportSummary } from './services/aiSummaryService.js';
+import { getCallbackTasks } from './data/store.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -192,6 +194,30 @@ app.get('/api/audit-logs', (req, res) => {
     success: true,
     total: logs.length,
     data: logs
+  });
+});
+
+// 10. Get Plain-Language AI Summary for an Order (English, Telugu, Hindi)
+app.get('/api/reports/:id/summary', (req, res) => {
+  const order = getOrderById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ success: false, message: 'Order not found' });
+  }
+
+  const summary = generateReportSummary(order);
+  res.json({
+    success: true,
+    data: summary
+  });
+});
+
+// 11. Get Urgent Callback Tasks (For Front-Desk Staff)
+app.get('/api/callback-tasks', (req, res) => {
+  const tasks = getCallbackTasks();
+  res.json({
+    success: true,
+    total: tasks.length,
+    data: tasks
   });
 });
 
