@@ -31,6 +31,21 @@ export const getOrdersByDoctor = (doctorName) => {
   );
 };
 
+// Add batch of orders from CSV import (avoids duplicates)
+export const addOrders = (newOrders) => {
+  let addedCount = 0;
+  newOrders.forEach((newOrder) => {
+    const existingIndex = orders.findIndex((o) => o.orderId === newOrder.orderId);
+    if (existingIndex >= 0) {
+      orders[existingIndex] = { ...orders[existingIndex], ...newOrder };
+    } else {
+      orders.unshift(newOrder);
+      addedCount++;
+    }
+  });
+  return { addedCount, totalOrders: orders.length };
+};
+
 export const addAuditLog = (logEntry) => {
   const log = {
     id: `LOG-${Date.now()}`,

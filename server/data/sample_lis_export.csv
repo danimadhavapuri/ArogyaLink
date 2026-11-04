@@ -1,0 +1,4 @@
+orderId,patientName,patientPhone,age,gender,testName,parameter,result,unit,referenceRange,status,referringDoctor,doctorSpecialty,collectionCentre
+ORD-71240,Subba Rao K,+91 94401 22334,52,Male,Fasting Blood Glucose,Glucose,168,mg/dL,70 - 99,Ready,Dr. S. Ramanaiah,General Physician,Governorpet Centre
+ORD-71245,Anuradha Devi P,+91 99890 55667,39,Female,Thyroid Profile,TSH,6.4,uIU/mL,0.4 - 4.2,Ready,Dr. P. Anitha,Cardiologist,Bunder Road Centre
+ORD-71250,Kiran Kumar B,+91 91234 56789,28,Male,Complete Blood Picture,Platelets,180000,/uL,150000 - 450000,Processing,Dr. K. Suresh,Nephrologist,One Town Branch

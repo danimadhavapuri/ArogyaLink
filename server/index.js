@@ -1,14 +1,22 @@
 import express from 'express';
 import cors from 'cors';
-import { getOrders, getOrderById } from './data/store.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { getOrders, getOrderById, addOrders } from './data/store.js';
 import { generateExpiringToken, verifyExpiringToken } from './services/tokenService.js';
 import { recordAccessLog, fetchAllAuditLogs } from './services/auditService.js';
+import { parseLISCSV } from './services/csvParser.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.text({ type: 'text/csv' }));
 
 // 1. Health Check
 app.get('/api/health', (req, res) => {
@@ -39,7 +47,60 @@ app.get('/api/orders/:id', (req, res) => {
   res.json({ success: true, data: order });
 });
 
-// 4. Generate 72-Hour Expiring Link for an Order
+// 4. Download Sample LIS CSV Template (For Front-Desk)
+app.get('/api/orders/sample-csv', (req, res) => {
+  const samplePath = path.join(__dirname, 'data', 'sample_lis_export.csv');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="sample_lis_export.csv"');
+  fs.createReadStream(samplePath).pipe(res);
+});
+
+// 5. Import LIS CSV Batch (Supports raw text, JSON { csv: "..." }, or auto-loads sample file)
+app.post('/api/orders/import-csv', (req, res) => {
+  try {
+    let csvData = null;
+
+    if (typeof req.body === 'string' && req.body.trim()) {
+      csvData = req.body;
+    } else if (req.body && typeof req.body === 'object' && req.body.csv) {
+      csvData = req.body.csv;
+    }
+
+    // Smart Fallback: If no CSV was passed in the request body, load sample_lis_export.csv automatically!
+    if (!csvData) {
+      const samplePath = path.join(__dirname, 'data', 'sample_lis_export.csv');
+      if (fs.existsSync(samplePath)) {
+        csvData = fs.readFileSync(samplePath, 'utf-8');
+      }
+    }
+
+    if (!csvData || typeof csvData !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'No CSV content provided and sample file was not found.'
+      });
+    }
+
+    const parsedOrders = parseLISCSV(csvData);
+    const result = addOrders(parsedOrders);
+
+    res.json({
+      success: true,
+      message: `Successfully processed LIS batch: ${result.addedCount} new orders added.`,
+      addedCount: result.addedCount,
+      totalOrders: result.totalOrders,
+      importedOrders: parsedOrders
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: 'Failed to parse LIS CSV file',
+      error: err.message
+    });
+  }
+});
+
+// 6. Generate 72-Hour Expiring Link for an Order
 app.post('/api/reports/generate-link', (req, res) => {
   const { orderId } = req.body;
   const order = getOrderById(orderId);
@@ -62,7 +123,7 @@ app.post('/api/reports/generate-link', (req, res) => {
   });
 });
 
-// 5. Verify Expiring Token
+// 7. Verify Expiring Token
 app.get('/api/reports/verify-token/:token', (req, res) => {
   const verification = verifyExpiringToken(req.params.token);
   if (!verification.valid) {
@@ -83,11 +144,10 @@ app.get('/api/reports/verify-token/:token', (req, res) => {
   });
 });
 
-// 6. Verify Mobile OTP to Unlock Full Report (Demo OTP: 1234)
+// 8. Verify Mobile OTP to Unlock Full Report (Demo OTP: 1234)
 app.post('/api/reports/verify-otp', (req, res) => {
   const { token, enteredOtp } = req.body;
 
-  // Verify the 72-hour token first
   const verification = verifyExpiringToken(token);
   if (!verification.valid) {
     return res.status(400).json({
@@ -96,7 +156,6 @@ app.post('/api/reports/verify-otp', (req, res) => {
     });
   }
 
-  // Demo OTP verification rule: accepts '1234' or any 4-digit code in test mode
   const DEMO_OTP = '1234';
   if (enteredOtp !== DEMO_OTP) {
     return res.status(401).json({
@@ -110,7 +169,6 @@ app.post('/api/reports/verify-otp', (req, res) => {
     return res.status(404).json({ success: false, message: 'Report record not found' });
   }
 
-  // Record DPDP 2023 compliance audit log
   recordAccessLog({
     orderId: order.orderId,
     patientName: order.patientName,
@@ -120,7 +178,6 @@ app.post('/api/reports/verify-otp', (req, res) => {
     userAgent: req.headers['user-agent']
   });
 
-  // Return authorized report data
   res.json({
     success: true,
     message: 'OTP verified successfully. Access granted.',
@@ -128,7 +185,7 @@ app.post('/api/reports/verify-otp', (req, res) => {
   });
 });
 
-// 7. Get DPDP Audit Access Logs (For Front-Desk & Compliance)
+// 9. Get DPDP Audit Access Logs
 app.get('/api/audit-logs', (req, res) => {
   const logs = fetchAllAuditLogs();
   res.json({
