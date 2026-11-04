@@ -8,6 +8,7 @@ import { generateExpiringToken, verifyExpiringToken } from './services/tokenServ
 import { recordAccessLog, fetchAllAuditLogs } from './services/auditService.js';
 import { parseLISCSV } from './services/csvParser.js';
 import { generateMultiLanguageSummary } from './services/aiSummaryService.js';
+import { SUPPORTED_LANGUAGES, translateSummary, resolvePatientDoubt } from './services/translationService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -223,6 +224,58 @@ app.get('/api/callback-tasks', (req, res) => {
     success: true,
     total: tasks.length,
     data: tasks
+  });
+});
+
+// 12. Get List of Supported Regional Languages (For Dropdown)
+app.get('/api/languages', (req, res) => {
+  res.json({
+    success: true,
+    languages: SUPPORTED_LANGUAGES
+  });
+});
+
+// 13. On-Demand Regional Translation (Tenglish, Tamil, Kannada, Marathi, etc.)
+app.post('/api/reports/:id/translate', async (req, res) => {
+  const order = getOrderById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ success: false, message: 'Order not found' });
+  }
+
+  // Safety rule check: if critical, translation of summary is blocked
+  if (order.isCritical) {
+    return res.status(400).json({
+      success: false,
+      isCritical: true,
+      message: 'Summary translation is suppressed for critical emergency values. Medical staff is contacting the doctor directly.'
+    });
+  }
+
+  const { targetLanguage } = req.body;
+  const translation = await translateSummary(order, targetLanguage || 'tenglish');
+
+  res.json({
+    success: true,
+    data: translation
+  });
+});
+
+// 14. In-App Patient Doubt Resolver (Patients ask questions without needing ChatGPT/Google)
+app.post('/api/reports/:id/ask-ai', async (req, res) => {
+  const order = getOrderById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ success: false, message: 'Order not found' });
+  }
+
+  const { question, language } = req.body;
+  if (!question || typeof question !== 'string') {
+    return res.status(400).json({ success: false, message: 'Please provide a question' });
+  }
+
+  const response = await resolvePatientDoubt(order, question, language || 'tenglish');
+  res.json({
+    success: true,
+    data: response
   });
 });
 

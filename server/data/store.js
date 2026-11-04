@@ -10,6 +10,7 @@ const seedFilePath = path.join(__dirname, 'seedData.json');
 let orders = [];
 let auditLogs = [];
 let callbackTasks = [];
+let flaggedSummaries = [];
 
 // Load seed data on start
 try {
@@ -31,7 +32,7 @@ export const getOrdersByDoctor = (doctorName) => {
   );
 };
 
-// Add batch of orders from CSV import (avoids duplicates)
+// Add batch of orders from CSV import
 export const addOrders = (newOrders) => {
   let addedCount = 0;
   newOrders.forEach((newOrder) => {
@@ -46,6 +47,7 @@ export const addOrders = (newOrders) => {
   return { addedCount, totalOrders: orders.length };
 };
 
+// DPDP 2023 Audit Logging
 export const addAuditLog = (logEntry) => {
   const log = {
     id: `LOG-${Date.now()}`,
@@ -58,6 +60,7 @@ export const addAuditLog = (logEntry) => {
 
 export const getAuditLogs = () => auditLogs;
 
+// Emergency Callback Tasks
 export const addCallbackTask = (task) => {
   const newTask = {
     id: `TASK-${Date.now()}`,
@@ -70,3 +73,30 @@ export const addCallbackTask = (task) => {
 };
 
 export const getCallbackTasks = () => callbackTasks;
+
+// Patient Flagging & Pathologist Weekly Review Queue
+export const addFlaggedSummary = (flagEntry) => {
+  const flag = {
+    id: `FLAG-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    status: 'Under Review',
+    reviewedByPathologist: false,
+    pathologistNotes: null,
+    ...flagEntry
+  };
+  flaggedSummaries.unshift(flag);
+  return flag;
+};
+
+export const getFlaggedSummaries = () => flaggedSummaries;
+
+export const resolveFlaggedSummary = (flagId, pathologistNotes) => {
+  const flag = flaggedSummaries.find((f) => f.id === flagId);
+  if (flag) {
+    flag.status = 'Resolved';
+    flag.reviewedByPathologist = true;
+    flag.pathologistNotes = pathologistNotes;
+    flag.resolvedAt = new Date().toISOString();
+  }
+  return flag;
+};
