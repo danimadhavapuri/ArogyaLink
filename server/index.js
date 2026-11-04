@@ -3,12 +3,11 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getOrders, getOrderById, addOrders } from './data/store.js';
+import { getOrders, getOrderById, addOrders, getCallbackTasks } from './data/store.js';
 import { generateExpiringToken, verifyExpiringToken } from './services/tokenService.js';
 import { recordAccessLog, fetchAllAuditLogs } from './services/auditService.js';
 import { parseLISCSV } from './services/csvParser.js';
-import { generateReportSummary } from './services/aiSummaryService.js';
-import { getCallbackTasks } from './data/store.js';
+import { generateMultiLanguageSummary } from './services/aiSummaryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,7 +67,7 @@ app.post('/api/orders/import-csv', (req, res) => {
       csvData = req.body.csv;
     }
 
-    // Smart Fallback: If no CSV was passed in the request body, load sample_lis_export.csv automatically!
+    // Smart Fallback: If no CSV was passed in the request body, load sample_lis_export.csv automatically
     if (!csvData) {
       const samplePath = path.join(__dirname, 'data', 'sample_lis_export.csv');
       if (fs.existsSync(samplePath)) {
@@ -197,17 +196,23 @@ app.get('/api/audit-logs', (req, res) => {
   });
 });
 
-// 10. Get Plain-Language AI Summary for an Order (English, Telugu, Hindi)
+// 10. Get Multi-Language Clinical Summary for an Order (English, Telugu, Hindi)
 app.get('/api/reports/:id/summary', (req, res) => {
   const order = getOrderById(req.params.id);
   if (!order) {
     return res.status(404).json({ success: false, message: 'Order not found' });
   }
 
-  const summary = generateReportSummary(order);
+  const summary = generateMultiLanguageSummary(order);
   res.json({
     success: true,
-    data: summary
+    orderId: order.orderId,
+    patientName: order.patientName,
+    parameter: order.parameter,
+    result: `${order.result} ${order.unit}`,
+    referenceRange: order.referenceRange,
+    summary,
+    disclaimer: 'This summary is an educational aid and does not substitute for clinical advice from your referring doctor.'
   });
 });
 
