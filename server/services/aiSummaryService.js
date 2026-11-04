@@ -1,7 +1,5 @@
-/**
- * Pre-validated clinical templates for common diagnostic tests
- * Per Isocode brief: "When the AI is wrong: summaries use locked templates for the 30 most common tests"
- */
+import { addCallbackTask } from '../data/store.js';
+
 export const CLINICAL_TEMPLATES = {
   Haemoglobin: {
     low: {
@@ -39,7 +37,21 @@ export const CLINICAL_TEMPLATES = {
 };
 
 /**
- * Analyzes a parameter against its reference range
+ * Checks for clinical panic values
+ */
+export const isCriticalPanicValue = (parameter, result) => {
+  const num = parseFloat(result);
+  if (isNaN(num)) return false;
+
+  // Medical panic ranges
+  if (parameter === 'Potassium' && (num >= 6.0 || num <= 2.8)) return true;
+  if (parameter === 'Haemoglobin' && num <= 7.0) return true;
+  if (parameter === 'Glucose' && (num >= 350 || num <= 45)) return true;
+  return false;
+};
+
+/**
+ * Evaluates parameter against normal reference range
  */
 export const evaluateParameter = (parameter, result, referenceRange) => {
   const numResult = parseFloat(result);
@@ -57,14 +69,48 @@ export const evaluateParameter = (parameter, result, referenceRange) => {
 };
 
 /**
- * Generates clinical summaries in English, Telugu, and Hindi
+ * Main summary generator with CRITICAL SAFETY INTERCEPT
  */
 export const generateMultiLanguageSummary = (order) => {
-  const { parameter, result, unit, referenceRange } = order;
+  const { orderId, patientName, patientPhone, parameter, result, unit, referenceRange, isCritical, referringDoctor } = order;
+
+  // ==============================================================
+  // 🚨 CRITICAL SAFETY INTERCEPT (Per Isocode Brief Rule)
+  // "Critical values get no summary and create a callback task for staff."
+  // ==============================================================
+  if (isCritical || isCriticalPanicValue(parameter, result)) {
+    // Automatically trigger urgent callback task on Front-Desk console
+    addCallbackTask({
+      orderId,
+      patientName,
+      patientPhone,
+      parameter,
+      result: `${result} ${unit}`,
+      referringDoctor,
+      urgency: 'HIGH_CRITICAL',
+      reason: `Critical panic value detected (${parameter}: ${result} ${unit}). AI summary suppressed for patient safety.`
+    });
+
+    return {
+      isCritical: true,
+      aiBlocked: true,
+      status: 'CRITICAL',
+      alertMessage: {
+        en: '🚨 CRITICAL MEDICAL ALERT: A summary has not been shown because this result requires immediate medical attention. Our laboratory medical team has initiated an urgent callback with your referring doctor.',
+        te: '🚨 అత్యవసర వైద్య హెచ్చరిక: ఈ ఫలితానికి తక్షణ వైద్య సహాయం అవసరమైనందున సాధారణ వివరణ నిలిపివేయబడింది. మా ల్యాబ్ వైద్య బృందం వెంటనే మీ డాక్టర్ గారిని సంప్రదిస్తున్నారు.',
+        hi: '🚨 गंभीर मेडिकल अलर्ट: इस रिपोर्ट के लिए तत्काल डॉक्टर की देखरेख आवश्यक है। सामान्य सारांश रोक दिया गया है। हमारी मेडिकल टीम आपके डॉक्टर से तुरंत संपर्क कर रही है।'
+      },
+      actionRequired: 'Please visit your nearest emergency room or contact your referring doctor immediately.'
+    };
+  }
+
+  // If not critical, evaluate normal vs out-of-range
   const evaluation = evaluateParameter(parameter, result, referenceRange);
 
   if (evaluation.status === 'NORMAL') {
     return {
+      isCritical: false,
+      aiBlocked: false,
       status: 'NORMAL',
       en: `Your ${parameter} (${result} ${unit}) is within the healthy reference range (${referenceRange}). No special action is required.`,
       te: `మీ ${parameter} (${result} ${unit}) సాధారణ ఆరోగ్యకరమైన పరిధిలో (${referenceRange}) ఉంది. ఎలాంటి ఆందోళన అవసరం లేదు.`,
@@ -72,7 +118,7 @@ export const generateMultiLanguageSummary = (order) => {
     };
   }
 
-  // Check if locked clinical template exists
+  // Out-of-Range Clinical Template
   const templateGroup = CLINICAL_TEMPLATES[parameter];
   const template = templateGroup
     ? evaluation.status === 'LOW'
@@ -82,6 +128,8 @@ export const generateMultiLanguageSummary = (order) => {
 
   if (template) {
     return {
+      isCritical: false,
+      aiBlocked: false,
       status: evaluation.status,
       en: template.en,
       te: template.te,
@@ -89,14 +137,16 @@ export const generateMultiLanguageSummary = (order) => {
     };
   }
 
-  // Generic fallback if test is not in predefined list
+  // Generic fallback
   const flagText = evaluation.status === 'LOW' ? 'lower than' : 'higher than';
   const flagTextTe = evaluation.status === 'LOW' ? 'తక్కువగా' : 'ఎక్కువగా';
   const flagTextHi = evaluation.status === 'LOW' ? 'कम' : 'अधिक';
 
   return {
+    isCritical: false,
+    aiBlocked: false,
     status: evaluation.status,
-    en: `Your ${parameter} result (${result} ${unit}) is ${flagText} the standard reference range (${referenceRange}). Please consult Dr. ${order.referringDoctor} for clinical guidance.`,
+    en: `Your ${parameter} result (${result} ${unit}) is ${flagText} the standard reference range (${referenceRange}). Please consult Dr. ${referringDoctor} for clinical guidance.`,
     te: `మీ ${parameter} ఫలితం (${result} ${unit}) సాధారణ పరిధి (${referenceRange}) కంటే ${flagTextTe} ఉంది. దయచేసి మీ డాక్టర్ గారి సలహా తీసుకోండి.`,
     hi: `आपका ${parameter} परिणाम (${result} ${unit}) सामान्य सीमा (${referenceRange}) से ${flagTextHi} है। डॉक्टर से परामर्श लें।`
   };
