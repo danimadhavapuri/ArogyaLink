@@ -38,11 +38,13 @@ export default function AiSummaryCard({ order }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch core summary
+                // Fetch core summary
         const sumRes = await fetch(`/api/reports/${order.orderId}/summary`);
         const sumJson = await sumRes.json();
         if (sumJson.success) {
-          setSummaryData(sumJson.data);
+          // Accept both sumJson.data and sumJson.summary
+          const payload = sumJson.data || sumJson;
+          setSummaryData(payload);
         }
 
         // Fetch 26+ languages list
@@ -148,12 +150,13 @@ export default function AiSummaryCard({ order }) {
     );
   }
 
-  // Get current active explanation text
+    // Get current active explanation text
   let currentSummaryText = '';
   if (translatedText) {
     currentSummaryText = translatedText;
-  } else if (summaryData && summaryData.summary) {
-    currentSummaryText = summaryData.summary[selectedLang] || summaryData.summary.en;
+  } else if (summaryData) {
+    const sumObj = summaryData.summary || summaryData;
+    currentSummaryText = sumObj[selectedLang] || sumObj.en || sumObj.te;
   }
 
   return (

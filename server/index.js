@@ -214,11 +214,10 @@ app.get('/api/reports/:id/summary', (req, res) => {
   const summary = generateMultiLanguageSummary(order);
   res.json({
     success: true,
-    orderId: order.orderId,
-    patientName: order.patientName,
-    parameter: order.parameter,
-    result: `${order.result} ${order.unit}`,
-    referenceRange: order.referenceRange,
+    data: {
+      ...order,
+      summary
+    },
     summary,
     disclaimer: 'This summary is an educational aid and does not substitute for clinical advice from your referring doctor.'
   });
