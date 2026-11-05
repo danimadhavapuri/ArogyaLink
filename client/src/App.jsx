@@ -1,7 +1,38 @@
-import React from 'react';
-import { ShieldCheck, PhoneCall, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShieldCheck, PhoneCall, Building2, UserCheck, RefreshCw } from 'lucide-react';
+import OtpVerificationGate from './components/OtpVerificationGate';
 
 export default function App() {
+  const [selectedOrderId, setSelectedOrderId] = useState('ORD-71204'); // Default to Lakshmi Prasanna
+  const [tokenData, setTokenData] = useState(null);
+  const [verifiedOrder, setVerifiedOrder] = useState(null);
+  const [loadingToken, setLoadingToken] = useState(false);
+
+  // Generate / Fetch 72-hour expiring link for selected sample patient
+  const fetchTokenForOrder = async (orderId) => {
+    setLoadingToken(true);
+    setVerifiedOrder(null);
+    try {
+      const res = await fetch('/api/reports/generate-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTokenData(data);
+      }
+    } catch (err) {
+      console.error('Error generating token:', err);
+    } finally {
+      setLoadingToken(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTokenForOrder(selectedOrderId);
+  }, [selectedOrderId]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Clinical Navigation Bar */}
@@ -32,18 +63,84 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Placeholder */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-xs">
-          <ShieldCheck className="w-12 h-12 text-teal-600 mx-auto mb-3" />
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">ArogyaLink Patient Report Delivery</h2>
-          <p className="text-slate-600 max-w-md mx-auto text-sm leading-relaxed">
-            Secure, encrypted medical report delivery system serving coastal Andhra Pradesh patients and referring doctors.
-          </p>
+      {/* Reviewer Quick Patient Switcher Bar */}
+      <div className="bg-slate-100 border-b border-slate-200 py-2.5 px-4">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="text-slate-600 font-semibold flex items-center gap-1.5">
+            <UserCheck className="w-4 h-4 text-teal-600" />
+            Reviewer Demo Switcher:
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setSelectedOrderId('ORD-71204')}
+              className={`px-3 py-1 rounded-lg border font-medium cursor-pointer transition-colors ${
+                selectedOrderId === 'ORD-71204'
+                  ? 'bg-teal-600 text-white border-teal-600'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Lakshmi Prasanna (Hb: 10.2 Low)
+            </button>
+            <button
+              onClick={() => setSelectedOrderId('ORD-71233')}
+              className={`px-3 py-1 rounded-lg border font-medium cursor-pointer transition-colors ${
+                selectedOrderId === 'ORD-71233'
+                  ? 'bg-rose-600 text-white border-rose-600'
+                  : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+              }`}
+            >
+              Farzana Begum (K+: 6.8 Critical)
+            </button>
+            <button
+              onClick={() => setSelectedOrderId('ORD-71219')}
+              className={`px-3 py-1 rounded-lg border font-medium cursor-pointer transition-colors ${
+                selectedOrderId === 'ORD-71219'
+                  ? 'bg-amber-600 text-white border-amber-600'
+                  : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50'
+              }`}
+            >
+              Venkata Rao (LDL: 142)
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+        {!verifiedOrder ? (
+          loadingToken || !tokenData ? (
+            <div className="text-center py-12 text-slate-500 flex flex-col items-center gap-2">
+              <RefreshCw className="w-8 h-8 text-teal-600 animate-spin" />
+              <span>Loading secure 72-hour link...</span>
+            </div>
+          ) : (
+            <OtpVerificationGate
+              tokenData={tokenData}
+              onVerified={(order) => setVerifiedOrder(order)}
+            />
+          )
+        ) : (
+          /* Success placeholder before Step 4.3 */
+          <div className="bg-white rounded-2xl border border-emerald-200 p-8 text-center shadow-xs">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">OTP Verified Successfully!</h2>
+            <p className="text-slate-600 mt-2">
+              Viewing authorized report for <strong>{verifiedOrder.patientName}</strong> (Order ID:{' '}
+              {verifiedOrder.orderId}).
+            </p>
+            <button
+              onClick={() => setVerifiedOrder(null)}
+              className="mt-6 text-sm text-teal-700 hover:text-teal-800 font-semibold underline cursor-pointer"
+            >
+              ← Back to Verification Gate
+            </button>
+          </div>
+        )}
       </main>
 
-      {/* Accessible Footer for Elderly Patients */}
+      {/* Accessible Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
         <p>© 2026 ArogyaLink Diagnostic Chain • Vijayawada, Andhra Pradesh</p>
         <p className="text-slate-400 mt-1">Compliant with Digital Personal Data Protection (DPDP) Act 2023</p>
