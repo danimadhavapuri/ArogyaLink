@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, PhoneCall, Building2, UserCheck, RefreshCw } from 'lucide-react';
 import OtpVerificationGate from './components/OtpVerificationGate';
 import LabReportViewer from './components/LabReportViewer';
+import AiSummaryCard from './components/AiSummaryCard';
 
 export default function App() {
   const [selectedOrderId, setSelectedOrderId] = useState('ORD-71204'); // Default to Lakshmi Prasanna
@@ -120,12 +121,13 @@ export default function App() {
               onVerified={(order) => setVerifiedOrder(order)}
             />
           )
-                ) : (
+                  ) : (
           <LabReportViewer
             order={verifiedOrder}
             onBack={() => setVerifiedOrder(null)}
           >
-            {/* Step 4.4 Multi-Language AI summary will sit here */}
+            {/* Step 4.4 Multi-Language AI summary */}
+            <AiSummaryCard order={verifiedOrder} />
           </LabReportViewer>
         )}
       </main>

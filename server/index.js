@@ -3,7 +3,15 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getOrders, getOrderById, addOrders, getCallbackTasks } from './data/store.js';
+import {
+  getOrders,
+  getOrderById,
+  addOrders,
+  getCallbackTasks,
+  addFlaggedSummary,
+  getFlaggedSummaries,
+  resolveFlaggedSummary
+} from './data/store.js';
 import { generateExpiringToken, verifyExpiringToken } from './services/tokenService.js';
 import { recordAccessLog, fetchAllAuditLogs } from './services/auditService.js';
 import { parseLISCSV } from './services/csvParser.js';
@@ -57,7 +65,7 @@ app.get('/api/orders/sample-csv', (req, res) => {
   fs.createReadStream(samplePath).pipe(res);
 });
 
-// 5. Import LIS CSV Batch (Supports raw text, JSON { csv: "..." }, or auto-loads sample file)
+// 5. Import LIS CSV Batch
 app.post('/api/orders/import-csv', (req, res) => {
   try {
     let csvData = null;
@@ -68,7 +76,6 @@ app.post('/api/orders/import-csv', (req, res) => {
       csvData = req.body.csv;
     }
 
-    // Smart Fallback: If no CSV was passed in the request body, load sample_lis_export.csv automatically
     if (!csvData) {
       const samplePath = path.join(__dirname, 'data', 'sample_lis_export.csv');
       if (fs.existsSync(samplePath)) {
@@ -197,7 +204,7 @@ app.get('/api/audit-logs', (req, res) => {
   });
 });
 
-// 10. Get Multi-Language Clinical Summary for an Order (English, Telugu, Hindi)
+// 10. Get Multi-Language Clinical Summary for an Order
 app.get('/api/reports/:id/summary', (req, res) => {
   const order = getOrderById(req.params.id);
   if (!order) {
@@ -227,7 +234,7 @@ app.get('/api/callback-tasks', (req, res) => {
   });
 });
 
-// 12. Get List of Supported Regional Languages (For Dropdown)
+// 12. Get List of Supported Regional Languages
 app.get('/api/languages', (req, res) => {
   res.json({
     success: true,
@@ -235,19 +242,18 @@ app.get('/api/languages', (req, res) => {
   });
 });
 
-// 13. On-Demand Regional Translation (Tenglish, Tamil, Kannada, Marathi, etc.)
+// 13. On-Demand Regional Translation
 app.post('/api/reports/:id/translate', async (req, res) => {
   const order = getOrderById(req.params.id);
   if (!order) {
     return res.status(404).json({ success: false, message: 'Order not found' });
   }
 
-  // Safety rule check: if critical, translation of summary is blocked
   if (order.isCritical) {
     return res.status(400).json({
       success: false,
       isCritical: true,
-      message: 'Summary translation is suppressed for critical emergency values. Medical staff is contacting the doctor directly.'
+      message: 'Summary translation is suppressed for critical emergency values.'
     });
   }
 
@@ -260,7 +266,7 @@ app.post('/api/reports/:id/translate', async (req, res) => {
   });
 });
 
-// 14. In-App Patient Doubt Resolver (Patients ask questions without needing ChatGPT/Google)
+// 14. In-App Patient Doubt Resolver
 app.post('/api/reports/:id/ask-ai', async (req, res) => {
   const order = getOrderById(req.params.id);
   if (!order) {
@@ -276,6 +282,55 @@ app.post('/api/reports/:id/ask-ai', async (req, res) => {
   res.json({
     success: true,
     data: response
+  });
+});
+
+// 15. Patient Flags a Summary (For Pathologist Quality Audit)
+app.post('/api/reports/:id/flag', (req, res) => {
+  const order = getOrderById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ success: false, message: 'Order not found' });
+  }
+
+  const { reason, patientComment } = req.body;
+  const flag = addFlaggedSummary({
+    orderId: order.orderId,
+    patientName: order.patientName,
+    parameter: order.parameter,
+    result: `${order.result} ${order.unit}`,
+    reason: reason || 'Unclear medical explanation',
+    patientComment: patientComment || 'Patient requested clinical review'
+  });
+
+  res.json({
+    success: true,
+    message: 'Summary flagged for Pathologist weekly quality review.',
+    data: flag
+  });
+});
+
+// 16. Get Pathologist Weekly Review Queue
+app.get('/api/pathologist/review-queue', (req, res) => {
+  const queue = getFlaggedSummaries();
+  res.json({
+    success: true,
+    totalFlagged: queue.length,
+    data: queue
+  });
+});
+
+// 17. Pathologist Resolves a Flagged Summary
+app.post('/api/pathologist/review/:id/resolve', (req, res) => {
+  const { pathologistNotes } = req.body;
+  const resolved = resolveFlaggedSummary(req.params.id, pathologistNotes || 'Reviewed and validated by Chief Pathologist.');
+  if (!resolved) {
+    return res.status(404).json({ success: false, message: 'Flag record not found' });
+  }
+
+  res.json({
+    success: true,
+    message: 'Summary reviewed and signed off by Pathologist.',
+    data: resolved
   });
 });
 
