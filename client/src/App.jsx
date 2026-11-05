@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, PhoneCall, Building2, UserCheck, RefreshCw } from 'lucide-react';
 import OtpVerificationGate from './components/OtpVerificationGate';
+import LabReportViewer from './components/LabReportViewer';
 
 export default function App() {
   const [selectedOrderId, setSelectedOrderId] = useState('ORD-71204'); // Default to Lakshmi Prasanna
@@ -119,24 +120,13 @@ export default function App() {
               onVerified={(order) => setVerifiedOrder(order)}
             />
           )
-        ) : (
-          /* Success placeholder before Step 4.3 */
-          <div className="bg-white rounded-2xl border border-emerald-200 p-8 text-center shadow-xs">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
-              <ShieldCheck className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900">OTP Verified Successfully!</h2>
-            <p className="text-slate-600 mt-2">
-              Viewing authorized report for <strong>{verifiedOrder.patientName}</strong> (Order ID:{' '}
-              {verifiedOrder.orderId}).
-            </p>
-            <button
-              onClick={() => setVerifiedOrder(null)}
-              className="mt-6 text-sm text-teal-700 hover:text-teal-800 font-semibold underline cursor-pointer"
-            >
-              ← Back to Verification Gate
-            </button>
-          </div>
+                ) : (
+          <LabReportViewer
+            order={verifiedOrder}
+            onBack={() => setVerifiedOrder(null)}
+          >
+            {/* Step 4.4 Multi-Language AI summary will sit here */}
+          </LabReportViewer>
         )}
       </main>
 
