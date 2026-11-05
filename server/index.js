@@ -233,6 +233,26 @@ app.get('/api/callback-tasks', (req, res) => {
   });
 });
 
+// 11b. Resolve an Urgent Callback Task
+app.post('/api/callback-tasks/:id/resolve', (req, res) => {
+  const tasks = getCallbackTasks();
+  const task = tasks.find((t) => t.id === req.params.id);
+  if (!task) {
+    return res.status(404).json({ success: false, message: 'Task not found' });
+  }
+
+  task.status = 'Completed';
+  task.resolvedAt = new Date().toISOString();
+  task.resolvedBy = req.body.resolvedBy || 'Front-Desk Duty Officer';
+  task.notes = req.body.notes || 'Referring Doctor contacted directly via priority hospital phone line.';
+
+  res.json({
+    success: true,
+    message: 'Emergency callback task marked as completed.',
+    data: task
+  });
+});
+
 // 12. Get List of Supported Regional Languages
 app.get('/api/languages', (req, res) => {
   res.json({
