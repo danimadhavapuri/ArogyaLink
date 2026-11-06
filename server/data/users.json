@@ -1,0 +1,52 @@
+[
+  {
+    "id": "USR-DOC-001",
+    "email": "ramanaiah@arogyalink.in",
+    "password": "doctor123",
+    "name": "Dr. S. Ramanaiah",
+    "role": "doctor",
+    "doctorName": "Dr. S. Ramanaiah",
+    "specialization": "General Physician / Diabetologist",
+    "center": "Bunder Road Centre & Governorpet",
+    "phone": "+91 98480 11223",
+    "regNumber": "APMC-45129",
+    "createdAt": "2026-11-01T09:00:00Z"
+  },
+  {
+    "id": "USR-DOC-002",
+    "email": "anitha@arogyalink.in",
+    "password": "doctor123",
+    "name": "Dr. P. Anitha",
+    "role": "doctor",
+    "doctorName": "Dr. P. Anitha",
+    "specialization": "Consultant Physician & Endocrinologist",
+    "center": "Bunder Road Centre",
+    "phone": "+91 98480 44556",
+    "regNumber": "APMC-58210",
+    "createdAt": "2026-11-01T09:15:00Z"
+  },
+  {
+    "id": "USR-DOC-003",
+    "email": "suresh@arogyalink.in",
+    "password": "doctor123",
+    "name": "Dr. K. Suresh",
+    "role": "doctor",
+    "doctorName": "Dr. K. Suresh",
+    "specialization": "Cardiologist & Internal Medicine",
+    "center": "One Town Branch",
+    "phone": "+91 98480 77889",
+    "regNumber": "APMC-61044",
+    "createdAt": "2026-11-01T09:30:00Z"
+  },
+  {
+    "id": "USR-STF-001",
+    "email": "staff@arogyalink.in",
+    "password": "staff123",
+    "name": "Front-Desk Operations Supervisor",
+    "role": "staff",
+    "center": "Company A Central Lab, Vijayawada",
+    "phone": "+91 98660 55443",
+    "employeeId": "STF-VJ-104",
+    "createdAt": "2026-11-01T08:00:00Z"
+  }
+]

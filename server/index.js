@@ -6,11 +6,15 @@ import { fileURLToPath } from 'url';
 import {
   getOrders,
   getOrderById,
+  getOrdersByDoctor,
   addOrders,
   getCallbackTasks,
   addFlaggedSummary,
   getFlaggedSummaries,
-  resolveFlaggedSummary
+  resolveFlaggedSummary,
+  authenticateUser,
+  registerUser,
+  getAllDoctors
 } from './data/store.js';
 import { generateExpiringToken, verifyExpiringToken } from './services/tokenService.js';
 import { recordAccessLog, fetchAllAuditLogs } from './services/auditService.js';
@@ -37,6 +41,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+
 
 // 2. Get All Orders
 app.get('/api/orders', (req, res) => {
@@ -365,6 +371,182 @@ app.get('/api/doctors/reports', (req, res) => {
     total: doctorOrders.length,
     data: doctorOrders
   });
+});
+
+// ==========================================
+// 19. AUTHENTICATION & ROLE-BASED ACCESS
+// ==========================================
+
+// Login (Staff & Doctor)
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide both email address and password.'
+    });
+  }
+
+  const authenticated = authenticateUser(email, password);
+  if (!authenticated) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid email or password. Please check your credentials.'
+    });
+  }
+
+  // Audit login under DPDP Act 2023
+  recordAccessLog({
+    orderId: 'PORTAL-AUTH',
+    patientName: authenticated.name,
+    patientPhone: authenticated.email,
+    accessMethod: `${authenticated.role} Portal Sign-In (${authenticated.email})`,
+    ipAddress: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+    userAgent: req.headers['user-agent']
+  });
+
+  res.json({
+    success: true,
+    message: `Welcome back, ${authenticated.name}!`,
+    user: authenticated
+  });
+});
+
+// Register New Staff or Doctor
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { name, email, password, role, specialty, clinic, department, branch, phone } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required to create an account.'
+      });
+    }
+
+    const newUser = registerUser({
+      name,
+      email,
+      password,
+      role: role || 'STAFF',
+      specialty,
+      clinic,
+      department,
+      branch,
+      phone
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully.',
+      user: newUser
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+// Get List of All Referring Doctors (with patient counts and profiles)
+app.get('/api/auth/doctors', (req, res) => {
+  const doctors = getAllDoctors();
+  res.json({
+    success: true,
+    total: doctors.length,
+    data: doctors
+  });
+});
+
+// ==========================================
+// Authentication Endpoints (Doctor & Staff)
+// ==========================================
+
+// Login endpoint (validates credentials and returns role info)
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const user = authenticateUser(email, password);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  // Generate lightweight session token
+  const token = `token_${user.id}_${Date.now()}`;
+  res.json({
+    success: true,
+    message: `Logged in successfully as ${user.name}`,
+    user,
+    token
+  });
+});
+
+// Register endpoint (Sign Up for new Doctor or Staff)
+app.post('/api/auth/register', (req, res) => {
+  const { email, password, name, role, doctorName, specialization, center, phone } = req.body;
+
+  if (!email || !password || !name || !role) {
+    return res.status(400).json({ error: 'Email, password, name, and role are required.' });
+  }
+
+  if (role !== 'doctor' && role !== 'staff') {
+    return res.status(400).json({ error: "Role must be either 'doctor' or 'staff'." });
+  }
+
+  try {
+    const newUser = createUser({
+      email,
+      password,
+      name,
+      role,
+      doctorName: doctorName || name,
+      specialization,
+      center,
+      phone
+    });
+
+    const token = `token_${newUser.id}_${Date.now()}`;
+    res.status(201).json({
+      success: true,
+      message: `Account created successfully for ${newUser.name}`,
+      user: newUser,
+      token
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get doctors directory with patient count (for Staff Supervision view)
+app.get('/api/auth/doctors', (req, res) => {
+  const allUsers = getUsers();
+  const doctors = allUsers.filter(u => u.role === 'doctor');
+  const allOrders = getOrders();
+
+  // Attach active patient counts for each doctor
+  const doctorsWithStats = doctors.map(doc => {
+    const doctorOrders = allOrders.filter(o => 
+      o.referringDoctor && o.referringDoctor.toLowerCase().includes(doc.doctorName.toLowerCase().replace('dr.', '').trim())
+    );
+    return {
+      ...doc,
+      patientCount: doctorOrders.length,
+      orders: doctorOrders.map(o => ({
+        id: o.id,
+        patientName: o.patientName,
+        age: o.patientAge,
+        gender: o.patientGender,
+        testName: o.tests?.[0]?.testName || 'Diagnostic Panel',
+        status: o.reportStatus,
+        date: o.orderDate
+      }))
+    };
+  });
+
+  res.json({ success: true, doctors: doctorsWithStats });
 });
 
 app.listen(PORT, () => {
