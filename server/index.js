@@ -353,6 +353,20 @@ app.post('/api/pathologist/review/:id/resolve', (req, res) => {
   });
 });
 
+// 18. Get Referring Doctor Reports (Last 90 Days)
+app.get('/api/doctors/reports', (req, res) => {
+  const doctorQuery = req.query.doctor || 'Ramanaiah';
+  const doctorOrders = getOrdersByDoctor(doctorQuery);
+
+  res.json({
+    success: true,
+    filterDoctor: doctorQuery,
+    timeWindow: 'Last 90 Days',
+    total: doctorOrders.length,
+    data: doctorOrders
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 ArogyaLink Server running on http://localhost:${PORT}`);

@@ -249,7 +249,7 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView }) {
           }`}
         >
           <ShieldAlert className="w-4 h-4" />
-          <span>🚨 Urgent Doctor Callbacks ({pendingCallbacksCount})</span>
+          <span>🚨 Urgent Doctor Callbacks ({callbacks.length})</span>
         </button>
 
         <button
@@ -426,8 +426,8 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView }) {
               </span>
             </div>
             <span className="font-bold bg-rose-200 px-2.5 py-0.5 rounded-full">
-              {pendingCallbacksCount} Pending
-            </span>
+  {pendingCallbacksCount} Pending • {callbacks.length} Total
+</span>
           </div>
 
           <div className="grid gap-4">

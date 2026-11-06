@@ -6,15 +6,18 @@ import {
   UserCheck, 
   RefreshCw, 
   Smartphone, 
-  Laptop
+  Laptop,
+  Stethoscope
 } from 'lucide-react';
 import OtpVerificationGate from './components/OtpVerificationGate';
 import LabReportViewer from './components/LabReportViewer';
 import AiSummaryCard from './components/AiSummaryCard';
 import FrontDeskConsole from './components/FrontDeskConsole';
+import DoctorPortal from './components/DoctorPortal';
 
 export default function App() {
-  const [activeRole, setActiveRole] = useState('STAFF'); // 'PATIENT' or 'STAFF'
+  // 3 Roles: 'PATIENT' | 'STAFF' | 'DOCTOR'
+  const [activeRole, setActiveRole] = useState('STAFF');
   const [selectedOrderId, setSelectedOrderId] = useState('ORD-71204');
   const [tokenData, setTokenData] = useState(null);
   const [verifiedOrder, setVerifiedOrder] = useState(null);
@@ -45,7 +48,7 @@ export default function App() {
     fetchTokenForOrder(selectedOrderId);
   }, [selectedOrderId]);
 
-  const handleSelectFromDesk = (orderId) => {
+  const handleSelectFromDeskOrDoctor = (orderId) => {
     setSelectedOrderId(orderId);
     setActiveRole('PATIENT');
   };
@@ -72,7 +75,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Role Switcher Pill (Patient vs Front-Desk) */}
+          {/* 3-Role Switcher Bar (Patient vs Staff vs Doctor) */}
           <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveRole('PATIENT')}
@@ -96,6 +99,18 @@ export default function App() {
             >
               <Laptop className="w-3.5 h-3.5" />
               <span>Front-Desk Console</span>
+            </button>
+
+            <button
+              onClick={() => setActiveRole('DOCTOR')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeRole === 'DOCTOR'
+                  ? 'bg-teal-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Stethoscope className="w-3.5 h-3.5" />
+              <span>Referring Doctor (90d)</span>
             </button>
           </div>
         </div>
@@ -148,7 +163,9 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6">
         {activeRole === 'STAFF' ? (
-          <FrontDeskConsole onSelectOrderForPatientView={handleSelectFromDesk} />
+          <FrontDeskConsole onSelectOrderForPatientView={handleSelectFromDeskOrDoctor} />
+        ) : activeRole === 'DOCTOR' ? (
+          <DoctorPortal onSelectPatientReport={handleSelectFromDeskOrDoctor} />
         ) : !verifiedOrder ? (
           loadingToken || !tokenData ? (
             <div className="text-center py-16 text-slate-500 flex flex-col items-center gap-2">
