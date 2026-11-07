@@ -4,14 +4,14 @@ import LabReportViewer from './components/LabReportViewer';
 import FrontDeskConsole from './components/FrontDeskConsole';
 import DoctorPortal from './components/DoctorPortal';
 
-// Demo Patients available for Reviewer SMS Link Testing
+// Demo Patients available for Reviewer SMS Link Testing (DPDP Act 2023 Compliant)
 const TEST_SMS_PATIENTS = [
   {
     id: 'ORD-71204',
     name: 'Lakshmi Prasanna K',
     phone: '+91 98765 43210',
     maskedPhone: '+91 98765 *****',
-    test: 'Haemoglobin: 10.2 g/dL (Below Range)',
+    test: 'Complete Blood Picture (CBP)',
     doctor: 'Dr. S. Ramanaiah'
   },
   {
@@ -19,7 +19,7 @@ const TEST_SMS_PATIENTS = [
     name: 'Venkata Rao M',
     phone: '+91 98480 12345',
     maskedPhone: '+91 98480 *****',
-    test: 'LDL: 142 mg/dL (High)',
+    test: 'Lipid Profile (LDL Cholesterol)',
     doctor: 'Dr. P. Anitha'
   },
   {
@@ -27,15 +27,16 @@ const TEST_SMS_PATIENTS = [
     name: 'Farzana Begum',
     phone: '+91 97000 67890',
     maskedPhone: '+91 97000 *****',
-    test: 'Potassium: 6.8 mmol/L (🚨 Panic Value)',
-    doctor: 'Dr. K. Suresh'
+    test: 'Serum Electrolytes (Potassium)',
+    doctor: 'Dr. K. Suresh',
+    isUrgent: true
   },
   {
     id: 'ORD-71240',
     name: 'Subba Rao K',
     phone: '+91 94401 22334',
     maskedPhone: '+91 94401 *****',
-    test: 'Glucose: 168 mg/dL (High)',
+    test: 'Fasting Blood Sugar (Glucose)',
     doctor: 'Dr. S. Ramanaiah'
   },
   {
@@ -43,7 +44,7 @@ const TEST_SMS_PATIENTS = [
     name: 'Anuradha Devi P',
     phone: '+91 99890 55667',
     maskedPhone: '+91 99890 *****',
-    test: 'TSH: 6.4 uIU/mL (Thyroid Flag)',
+    test: 'Thyroid Function Test (TSH)',
     doctor: 'Dr. P. Anitha'
   },
   {
@@ -51,7 +52,7 @@ const TEST_SMS_PATIENTS = [
     name: 'Kiran Kumar B',
     phone: '+91 91234 56789',
     maskedPhone: '+91 91234 *****',
-    test: 'Platelets: 180,000 /uL (Normal)',
+    test: 'Platelet Count (Dengue Care)',
     doctor: 'Dr. K. Suresh'
   }
 ];
@@ -351,6 +352,27 @@ export default function App() {
               📱 Test Patient SMS Link
             </button>
 
+            {/* Quick Session Indicator & Sign Out */}
+            {(doctorUser || staffUser) && (
+              <div className="ml-2 flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl text-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="font-semibold text-slate-700 hidden sm:inline">
+                  {doctorUser ? doctorUser.name : `${staffUser.name} (Staff)`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (doctorUser) handleDoctorLogout();
+                    if (staffUser) handleStaffLogout();
+                  }}
+                  className="text-rose-600 hover:text-rose-800 hover:underline font-bold text-[11px] ml-1 cursor-pointer"
+                  title="Sign Out to Common Login Page"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+
           </div>
 
         </div>
@@ -364,7 +386,7 @@ export default function App() {
         {/* ============================================================ */}
         {activeTab === 'doctor' && (
           <div>
-            {!doctorUser ? (
+            {!doctorUser && !staffUser ? (
               /* Dedicated Doctor Sign In & Sign Up Page */
               <div className="max-w-md mx-auto my-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
                 <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white text-center">
@@ -514,10 +536,10 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              /* Authenticated Doctor Dashboard (Strictly Isolated) */
+              /* Authenticated Doctor Dashboard (Isolated Doctor View or Staff Supervisory Access) */
               <DoctorPortal
-                currentUser={doctorUser}
-                onLogout={handleDoctorLogout}
+                currentUser={doctorUser || staffUser}
+                onLogout={doctorUser ? handleDoctorLogout : handleStaffLogout}
               />
             )}
           </div>
@@ -540,6 +562,12 @@ export default function App() {
                     Central dispatch, multi-doctor supervision, emergency callbacks & DPDP logs
                   </p>
                 </div>
+
+                {doctorUser && (
+                  <div className="bg-amber-50 border-b border-amber-200 p-2.5 text-center text-[11px] text-amber-900 font-medium">
+                    ℹ️ You are signed in as clinician <strong>{doctorUser.name}</strong>. Staff authorization is required to access operations.
+                  </div>
+                )}
 
                 {/* 1-Click Reviewer Demo Fill for Staff */}
                 <div className="bg-teal-50/70 border-b border-teal-100 p-4">
@@ -716,7 +744,7 @@ export default function App() {
                   p.doctor.toLowerCase().includes(patientSearch.toLowerCase())
                 ).map((p) => {
                   const isSelected = selectedPatientId === p.id;
-                  const isCritical = p.test.includes('Panic');
+                  const isCritical = p.isUrgent || p.test.includes('Panic') || p.test.includes('Potassium');
                   return (
                     <div
                       key={p.id}
@@ -738,23 +766,28 @@ export default function App() {
                         </div>
                         <p className="font-bold text-slate-900">{p.name}</p>
                         <p className="text-[11px] text-slate-500">{p.test}</p>
-                        <p className="text-[10px] text-slate-400 mt-1">Ref by: {p.doctor}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Ref: {p.doctor}</p>
+                        
+                        {/* Live SMS Message Preview */}
+                        <div className="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200/80 font-mono text-[10px] text-slate-600 select-all leading-relaxed">
+                          📲 SMS: "Dear {p.name.split(' ')[0]}, your lab report is ready. Access: http://localhost:5173/report/demo_{p.id} (72h)"
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleSelectTestPatient(p);
                           }}
-                          className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors ${
+                          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-colors ${
                             isSelected 
-                              ? 'bg-amber-600 text-white' 
+                              ? 'bg-amber-600 text-white shadow-2xs' 
                               : 'bg-slate-100 hover:bg-amber-100 text-slate-700'
                           }`}
                         >
-                          <span>{isSelected ? '✓ Selected' : 'Test Link'}</span>
+                          <span>{isSelected ? '✓ Testing Below' : '▶ Test Link'}</span>
                         </button>
                         <button
                           type="button"
@@ -765,10 +798,10 @@ export default function App() {
                             setCopiedLinkId(p.id);
                             setTimeout(() => setCopiedLinkId(null), 3000);
                           }}
-                          className="py-1 px-2.5 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
-                          title="Copy direct patient link to test in another tab"
+                          className="py-1.5 px-3 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+                          title="Copy direct patient link to clipboard"
                         >
-                          {copiedLinkId === p.id ? '✓ Copied' : '🔗 Copy'}
+                          {copiedLinkId === p.id ? '✓ Copied' : '🔗 Copy Link'}
                         </button>
                       </div>
                     </div>
