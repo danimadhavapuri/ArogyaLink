@@ -18,7 +18,8 @@ export default function LabReportViewer({ order, onBack, children }) {
   
   // Determine parameter badge status
   const numResult = parseFloat(order.result);
-  const [minStr, maxStr] = order.referenceRange.split('-').map(s => s.trim());
+  const refRange = order?.referenceRange || '12.0 - 15.5';
+  const [minStr, maxStr] = (refRange.includes('-') ? refRange : '0 - 100').split('-').map(s => s.trim());
   const min = parseFloat(minStr);
   const max = parseFloat(maxStr);
   
