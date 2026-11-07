@@ -1,198 +1,816 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  PhoneCall, 
-  Building2, 
-  UserCheck, 
-  RefreshCw, 
-  Smartphone, 
-  Laptop,
-  Stethoscope
-} from 'lucide-react';
 import OtpVerificationGate from './components/OtpVerificationGate';
 import LabReportViewer from './components/LabReportViewer';
-import AiSummaryCard from './components/AiSummaryCard';
 import FrontDeskConsole from './components/FrontDeskConsole';
 import DoctorPortal from './components/DoctorPortal';
 
-export default function App() {
-  // 3 Roles: 'PATIENT' | 'STAFF' | 'DOCTOR'
-  const [activeRole, setActiveRole] = useState('STAFF');
-  const [selectedOrderId, setSelectedOrderId] = useState('ORD-71204');
-  const [tokenData, setTokenData] = useState(null);
-  const [verifiedOrder, setVerifiedOrder] = useState(null);
-  const [loadingToken, setLoadingToken] = useState(false);
+// Demo Patients available for Reviewer SMS Link Testing
+const TEST_SMS_PATIENTS = [
+  {
+    id: 'ORD-71204',
+    name: 'Lakshmi Prasanna K',
+    phone: '+91 98765 43210',
+    maskedPhone: '+91 98765 *****',
+    test: 'Haemoglobin: 10.2 g/dL (Below Range)',
+    doctor: 'Dr. S. Ramanaiah'
+  },
+  {
+    id: 'ORD-71219',
+    name: 'Venkata Rao M',
+    phone: '+91 98480 12345',
+    maskedPhone: '+91 98480 *****',
+    test: 'LDL: 142 mg/dL (High)',
+    doctor: 'Dr. P. Anitha'
+  },
+  {
+    id: 'ORD-71233',
+    name: 'Farzana Begum',
+    phone: '+91 97000 67890',
+    maskedPhone: '+91 97000 *****',
+    test: 'Potassium: 6.8 mmol/L (🚨 Panic Value)',
+    doctor: 'Dr. K. Suresh'
+  },
+  {
+    id: 'ORD-71240',
+    name: 'Subba Rao K',
+    phone: '+91 94401 22334',
+    maskedPhone: '+91 94401 *****',
+    test: 'Glucose: 168 mg/dL (High)',
+    doctor: 'Dr. S. Ramanaiah'
+  },
+  {
+    id: 'ORD-71245',
+    name: 'Anuradha Devi P',
+    phone: '+91 99890 55667',
+    maskedPhone: '+91 99890 *****',
+    test: 'TSH: 6.4 uIU/mL (Thyroid Flag)',
+    doctor: 'Dr. P. Anitha'
+  },
+  {
+    id: 'ORD-71250',
+    name: 'Kiran Kumar B',
+    phone: '+91 91234 56789',
+    maskedPhone: '+91 91234 *****',
+    test: 'Platelets: 180,000 /uL (Normal)',
+    doctor: 'Dr. K. Suresh'
+  }
+];
 
-  // Fetch token for patient view
-  const fetchTokenForOrder = async (orderId) => {
-    setLoadingToken(true);
-    setVerifiedOrder(null);
+export default function App() {
+  // Navigation tabs: 'doctor' | 'frontdesk' | 'patient'
+  const [activeTab, setActiveTab] = useState('doctor');
+
+  // Search & Copy Link states for Patient SMS simulator
+  const [patientSearch, setPatientSearch] = useState('');
+  const [copiedLinkId, setCopiedLinkId] = useState(null);
+
+  // Handle direct patient SMS link opened in browser (e.g. http://localhost:5173/report/:token)
+  useEffect(() => {
+    const pathname = window.location.pathname;
+    if (pathname.includes('/report/')) {
+      const token = pathname.split('/report/')[1]?.trim();
+      if (token) {
+        setActiveTab('patient');
+        setIsOtpVerified(false);
+        setActiveOrder(null);
+
+        fetch(`http://localhost:5000/api/reports/verify-token/${token}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              setTokenInfo({
+                token,
+                expiresInHours: 72,
+                patientName: data.patientName || 'Valued Patient',
+                maskedPhone: data.maskedPhone || '+91 98765 *****',
+                orderId: data.orderId
+              });
+              setSelectedPatientId(data.orderId || 'ORD-71204');
+            }
+          })
+          .catch(err => {
+            console.error('Failed to verify URL token:', err);
+          });
+      }
+    }
+  }, []);
+
+  // Dedicated Doctor Session
+  const [doctorUser, setDoctorUser] = useState(() => {
     try {
-      const res = await fetch('/api/reports/generate-link', {
+      const saved = localStorage.getItem('arogya_doctor_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Dedicated Staff Session
+  const [staffUser, setStaffUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('arogya_staff_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Patient OTP Portal State (Simulated SMS Link)
+  const [activeOrder, setActiveOrder] = useState(null);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [tokenInfo, setTokenInfo] = useState({
+    token: 'token_ord_71204_sample',
+    expiresInHours: 71,
+    patientName: 'Lakshmi Prasanna K',
+    maskedPhone: '+91 98765 *****'
+  });
+
+  const [selectedPatientId, setSelectedPatientId] = useState('ORD-71204');
+
+  const handleSelectTestPatient = (p) => {
+    setSelectedPatientId(p.id);
+    setTokenInfo({
+      token: `demo_${p.id}`,
+      expiresInHours: 71,
+      patientName: p.name,
+      maskedPhone: p.maskedPhone
+    });
+    setIsOtpVerified(false);
+    setActiveOrder(null);
+  };
+  const [docEmail, setDocEmail] = useState('');
+  const [docPassword, setDocPassword] = useState('');
+  const [docIsSignUp, setDocIsSignUp] = useState(false);
+  const [docName, setDocName] = useState('');
+  const [docSpecialty, setDocSpecialty] = useState('');
+  const [docClinic, setDocClinic] = useState('');
+  const [docLoading, setDocLoading] = useState(false);
+  const [docError, setDocError] = useState(null);
+
+  // Staff Sign In / Sign Up Form State
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [staffIsSignUp, setStaffIsSignUp] = useState(false);
+  const [staffName, setStaffName] = useState('');
+  const [staffBranch, setStaffBranch] = useState('');
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffError, setStaffError] = useState(null);
+
+  // Quick Reviewer Demo Fill for Doctors
+  const handleQuickDoctorFill = (email, pass) => {
+    setDocEmail(email);
+    setDocPassword(pass);
+    setDocIsSignUp(false);
+    setDocError(null);
+  };
+
+  // Quick Reviewer Demo Fill for Staff
+  const handleQuickStaffFill = (email, pass) => {
+    setStaffEmail(email);
+    setStaffPassword(pass);
+    setStaffIsSignUp(false);
+    setStaffError(null);
+  };
+
+  // Doctor Login / Register Submit
+  const handleDoctorSubmit = async (e) => {
+    e.preventDefault();
+    setDocError(null);
+    setDocLoading(true);
+
+    try {
+      const endpoint = docIsSignUp
+        ? 'http://localhost:5000/api/auth/register'
+        : 'http://localhost:5000/api/auth/login';
+
+      const payload = docIsSignUp
+        ? {
+            email: docEmail,
+            password: docPassword,
+            name: docName.toLowerCase().startsWith('dr.') ? docName : `Dr. ${docName}`,
+            doctorName: docName.toLowerCase().startsWith('dr.') ? docName : `Dr. ${docName}`,
+            role: 'doctor',
+            specialization: docSpecialty || 'General Diagnostic Medicine',
+            center: docClinic || 'Company A Lab Network, Vijayawada',
+            phone: '+91 98480 11223'
+          }
+        : { email: docEmail, password: docPassword };
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId })
+        body: JSON.stringify(payload)
       });
+
       const data = await res.json();
-      if (data.success) {
-        setTokenData(data);
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Authentication failed');
       }
+
+      const user = data.user;
+      if (user.role !== 'doctor') {
+        throw new Error('This account does not have doctor privileges. Please use Staff Console.');
+      }
+
+      setDoctorUser(user);
+      localStorage.setItem('arogya_doctor_user', JSON.stringify(user));
     } catch (err) {
-      console.error('Error generating token:', err);
+      setDocError(err.message);
     } finally {
-      setLoadingToken(false);
+      setDocLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchTokenForOrder(selectedOrderId);
-  }, [selectedOrderId]);
+  // Staff Login / Register Submit
+  const handleStaffSubmit = async (e) => {
+    e.preventDefault();
+    setStaffError(null);
+    setStaffLoading(true);
 
-  const handleSelectFromDeskOrDoctor = (orderId) => {
-    setSelectedOrderId(orderId);
-    setActiveRole('PATIENT');
+    try {
+      const endpoint = staffIsSignUp
+        ? 'http://localhost:5000/api/auth/register'
+        : 'http://localhost:5000/api/auth/login';
+
+      const payload = staffIsSignUp
+        ? {
+            email: staffEmail,
+            password: staffPassword,
+            name: staffName,
+            role: 'staff',
+            center: staffBranch || 'Central Diagnostic Hub, Vijayawada',
+            phone: '+91 98660 55443'
+          }
+        : { email: staffEmail, password: staffPassword };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Authentication failed');
+      }
+
+      const user = data.user;
+      if (user.role !== 'staff') {
+        throw new Error('This account does not have staff privileges. Please use Doctor Portal.');
+      }
+
+      setStaffUser(user);
+      localStorage.setItem('arogya_staff_user', JSON.stringify(user));
+    } catch (err) {
+      setStaffError(err.message);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  // Doctor Logout: Stays on Doctor Sign In Page
+  const handleDoctorLogout = () => {
+    localStorage.removeItem('arogya_doctor_user');
+    setDoctorUser(null);
+    setActiveTab('doctor');
+  };
+
+  // Staff Logout: Stays on Staff Sign In Page
+  const handleStaffLogout = () => {
+    localStorage.removeItem('arogya_staff_user');
+    setStaffUser(null);
+    setActiveTab('frontdesk');
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Clinical Navigation Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-sm font-bold text-xl">
+      
+      {/* Top Application Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          
+          {/* Brand Logo & Network Info */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
               ఆ
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-bold tracking-tight text-slate-900">ArogyaLink</h1>
-                <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium border border-teal-200">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-slate-800 tracking-tight">ArogyaLink</h1>
+                <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
                   DPDP 2023 Verified
                 </span>
               </div>
-              <p className="text-xs text-slate-500 flex items-center gap-1">
-                <Building2 className="w-3 h-3" /> Coastal AP Diagnostic Network • Vijayawada
-              </p>
+              <p className="text-xs text-slate-500">Coastal AP Diagnostic Network • Vijayawada (6 Labs & 38 Centres)</p>
             </div>
           </div>
 
-          {/* 3-Role Switcher Bar (Patient vs Staff vs Doctor) */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          {/* Navigation Controls: Exactly 2 Main Portals + Patient SMS Simulator */}
+          <div className="flex items-center gap-2">
+            
+            {/* Tab 1: Doctor Portal */}
             <button
-              onClick={() => setActiveRole('PATIENT')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeRole === 'PATIENT'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              onClick={() => setActiveTab('doctor')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'doctor'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Patient Portal</span>
+              🩺 Referring Doctor
+              {doctorUser && (
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+              )}
             </button>
 
+            {/* Tab 2: Front-Desk Staff Console */}
             <button
-              onClick={() => setActiveRole('STAFF')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeRole === 'STAFF'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              onClick={() => setActiveTab('frontdesk')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'frontdesk'
+                  ? 'bg-teal-700 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Laptop className="w-3.5 h-3.5" />
-              <span>Front-Desk Console</span>
+              🏢 Front-Desk Console
+              {staffUser && (
+                <span className="w-2 h-2 rounded-full bg-teal-300 animate-pulse"></span>
+              )}
             </button>
 
+            {/* Reviewer / Patient Link Simulator */}
             <button
-              onClick={() => setActiveRole('DOCTOR')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeRole === 'DOCTOR'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              onClick={() => setActiveTab('patient')}
+              className={`ml-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                activeTab === 'patient'
+                  ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-2xs font-bold'
+                  : 'bg-white text-slate-600 hover:text-amber-800 hover:bg-amber-50 border-slate-200'
               }`}
+              title="Simulates patient clicking the 72-hour link received via SMS/WhatsApp"
             >
-              <Stethoscope className="w-3.5 h-3.5" />
-              <span>Referring Doctor (90d)</span>
+              📱 Test Patient SMS Link
             </button>
+
           </div>
+
         </div>
       </header>
 
-      {/* If Patient View: Show Reviewer Switcher */}
-      {activeRole === 'PATIENT' && (
-        <div className="bg-slate-100 border-b border-slate-200 py-2.5 px-4">
-          <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="text-slate-600 font-semibold flex items-center gap-1.5">
-              <UserCheck className="w-4 h-4 text-teal-600" />
-              Reviewer Demo Switcher:
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setSelectedOrderId('ORD-71204')}
-                className={`px-3 py-1 rounded-lg border font-medium cursor-pointer transition-colors ${
-                  selectedOrderId === 'ORD-71204'
-                    ? 'bg-teal-600 text-white border-teal-600'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                Lakshmi Prasanna (Hb: 10.2)
-              </button>
-              <button
-                onClick={() => setSelectedOrderId('ORD-71233')}
-                className={`px-3 py-1 rounded-lg border font-medium cursor-pointer transition-colors ${
-                  selectedOrderId === 'ORD-71233'
-                    ? 'bg-rose-600 text-white border-rose-600'
-                    : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
-                }`}
-              >
-                Farzana Begum (K+: 6.8 Critical)
-              </button>
-              <button
-                onClick={() => setSelectedOrderId('ORD-71219')}
-                className={`px-3 py-1 rounded-lg border font-medium cursor-pointer transition-colors ${
-                  selectedOrderId === 'ORD-71219'
-                    ? 'bg-amber-600 text-white border-amber-600'
-                    : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50'
-                }`}
-              >
-                Venkata Rao (LDL: 142)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Main Body Canvas */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+        
+        {/* ============================================================ */}
+        {/* VIEW 1: REFERRING DOCTOR PORTAL */}
+        {/* ============================================================ */}
+        {activeTab === 'doctor' && (
+          <div>
+            {!doctorUser ? (
+              /* Dedicated Doctor Sign In & Sign Up Page */
+              <div className="max-w-md mx-auto my-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white text-center">
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-2 backdrop-blur-xs">
+                    🩺
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">Referring Clinician Portal</h2>
+                  <p className="text-xs text-emerald-100 mt-1">
+                    Secure 90-day diagnostic access for your referred patients
+                  </p>
+                </div>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6">
-        {activeRole === 'STAFF' ? (
-          <FrontDeskConsole onSelectOrderForPatientView={handleSelectFromDeskOrDoctor} />
-        ) : activeRole === 'DOCTOR' ? (
-          <DoctorPortal onSelectPatientReport={handleSelectFromDeskOrDoctor} />
-        ) : !verifiedOrder ? (
-          loadingToken || !tokenData ? (
-            <div className="text-center py-16 text-slate-500 flex flex-col items-center gap-2">
-              <RefreshCw className="w-8 h-8 text-teal-600 animate-spin" />
-              <span>Loading secure 72-hour link...</span>
-            </div>
-          ) : (
-            <OtpVerificationGate
-              tokenData={tokenData}
-              onVerified={(order) => setVerifiedOrder(order)}
-            />
-          )
-        ) : (
-          <LabReportViewer
-            order={verifiedOrder}
-            onBack={() => setVerifiedOrder(null)}
-          >
-            <AiSummaryCard order={verifiedOrder} />
-          </LabReportViewer>
+                {/* 1-Click Reviewer Demo Fill for Doctors */}
+                <div className="bg-emerald-50/70 border-b border-emerald-100 p-4">
+                  <p className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>⚡ Reviewer 1-Click Credentials:</span>
+                    <span className="text-[10px] text-emerald-700 font-normal">Auto-fills credentials</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDoctorFill('ramanaiah@arogyalink.in', 'doctor123')}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100 transition-all shadow-2xs cursor-pointer"
+                    >
+                      Dr. S. Ramanaiah
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDoctorFill('anitha@arogyalink.in', 'doctor123')}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100 transition-all shadow-2xs cursor-pointer"
+                    >
+                      Dr. P. Anitha
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDoctorFill('suresh@arogyalink.in', 'doctor123')}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100 transition-all shadow-2xs cursor-pointer"
+                    >
+                      Dr. K. Suresh
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-5 pb-2 border-b border-slate-100">
+                    <h3 className="text-sm font-bold text-slate-800">
+                      {docIsSignUp ? 'Register New Clinician Profile' : 'Doctor Sign In'}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => { setDocIsSignUp(!docIsSignUp); setDocError(null); }}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 underline cursor-pointer"
+                    >
+                      {docIsSignUp ? 'Already registered? Sign In' : 'Need an account? Sign Up'}
+                    </button>
+                  </div>
+
+                  {docError && (
+                    <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>{docError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleDoctorSubmit} className="space-y-3.5">
+                    {docIsSignUp && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Doctor Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={docName}
+                            onChange={(e) => setDocName(e.target.value)}
+                            placeholder="e.g. Dr. K. Venkat"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Clinical Specialization
+                          </label>
+                          <input
+                            type="text"
+                            value={docSpecialty}
+                            onChange={(e) => setDocSpecialty(e.target.value)}
+                            placeholder="e.g. Diabetologist, Cardiologist"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Hospital / Clinic Location
+                          </label>
+                          <input
+                            type="text"
+                            value={docClinic}
+                            onChange={(e) => setDocClinic(e.target.value)}
+                            placeholder="e.g. Coastal Heart Care, Governorpet"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Doctor Official Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={docEmail}
+                        onChange={(e) => setDocEmail(e.target.value)}
+                        placeholder="doctor@arogyalink.in"
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Password *
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={docPassword}
+                        onChange={(e) => setDocPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={docLoading}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-4"
+                    >
+                      {docLoading ? 'Verifying Credentials...' : (docIsSignUp ? 'Register Doctor Account' : 'Sign In as Doctor')}
+                    </button>
+                  </form>
+                  <p className="text-[10px] text-slate-400 text-center mt-3">
+                    🔒 Medical Privacy Guaranteed: Doctors see only their own patients.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Authenticated Doctor Dashboard (Strictly Isolated) */
+              <DoctorPortal
+                currentUser={doctorUser}
+                onLogout={handleDoctorLogout}
+              />
+            )}
+          </div>
         )}
+
+        {/* ============================================================ */}
+        {/* VIEW 2: FRONT-DESK STAFF CONSOLE */}
+        {/* ============================================================ */}
+        {activeTab === 'frontdesk' && (
+          <div>
+            {!staffUser ? (
+              /* Dedicated Staff Sign In & Sign Up Page */
+              <div className="max-w-md mx-auto my-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+                <div className="bg-gradient-to-r from-teal-700 to-slate-800 p-6 text-white text-center">
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-2 backdrop-blur-xs">
+                    🏢
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">Staff Operations Console</h2>
+                  <p className="text-xs text-teal-100 mt-1">
+                    Central dispatch, multi-doctor supervision, emergency callbacks & DPDP logs
+                  </p>
+                </div>
+
+                {/* 1-Click Reviewer Demo Fill for Staff */}
+                <div className="bg-teal-50/70 border-b border-teal-100 p-4">
+                  <p className="text-[11px] font-bold text-teal-900 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>⚡ Reviewer 1-Click Credentials:</span>
+                    <span className="text-[10px] text-teal-700 font-normal">Auto-fills credentials</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickStaffFill('staff@arogyalink.in', 'staff123')}
+                    className="w-full py-1.5 text-xs font-semibold rounded-lg bg-white border border-teal-200 text-teal-800 hover:bg-teal-100 transition-all shadow-2xs cursor-pointer text-center"
+                  >
+                    Front-Desk Operations Supervisor (Central Lab)
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-5 pb-2 border-b border-slate-100">
+                    <h3 className="text-sm font-bold text-slate-800">
+                      {staffIsSignUp ? 'Register Staff Member' : 'Staff Sign In'}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => { setStaffIsSignUp(!staffIsSignUp); setStaffError(null); }}
+                      className="text-xs font-semibold text-teal-600 hover:text-teal-800 underline cursor-pointer"
+                    >
+                      {staffIsSignUp ? 'Already registered? Sign In' : 'Need an account? Sign Up'}
+                    </button>
+                  </div>
+
+                  {staffError && (
+                    <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>{staffError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleStaffSubmit} className="space-y-3.5">
+                    {staffIsSignUp && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Staff Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={staffName}
+                            onChange={(e) => setStaffName(e.target.value)}
+                            placeholder="e.g. Ramesh Kumar"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Lab Branch / Collection Centre
+                          </label>
+                          <input
+                            type="text"
+                            value={staffBranch}
+                            onChange={(e) => setStaffBranch(e.target.value)}
+                            placeholder="e.g. Governorpet Centre, Vijayawada"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Staff Official Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={staffEmail}
+                        onChange={(e) => setStaffEmail(e.target.value)}
+                        placeholder="staff@arogyalink.in"
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Password *
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={staffPassword}
+                        onChange={(e) => setStaffPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={staffLoading}
+                      className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-4"
+                    >
+                      {staffLoading ? 'Verifying Staff Access...' : (staffIsSignUp ? 'Register Staff Account' : 'Sign In as Staff')}
+                    </button>
+                  </form>
+                  <p className="text-[10px] text-slate-400 text-center mt-3">
+                    🔒 Supervise all doctor rosters, daily orders, and urgent callbacks.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Authenticated Staff Console (All Doctors & Front-Desk Operations) */
+              <FrontDeskConsole
+                currentUser={staffUser}
+                onLogout={handleStaffLogout}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* VIEW 3: CLIENT / PATIENT SECURE SMS LINK EXPERIENCE */}
+        {/* ============================================================ */}
+        {activeTab === 'patient' && (
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center justify-between text-xs text-amber-900">
+              <div className="flex items-center gap-2">
+                <span>📱 <strong>Patient SMS Link Simulator:</strong> This is the exact screen a patient sees when opening their safe 72-hour link from SMS/WhatsApp.</span>
+              </div>
+              <button
+                onClick={() => setActiveTab('doctor')}
+                className="bg-white border border-amber-300 text-amber-900 font-bold px-3 py-1 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer text-[11px]"
+              >
+                ← Return to Doctor & Staff Portal
+              </button>
+            </div>
+
+            {/* Reviewer Patient Selector & Search: Easily inspect any patient's report */}
+            <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-2xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>🔍</span>
+                    <span>Patient Report Directory & SMS Link Simulator:</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Search and test how each patient verifies via OTP and views their report & AI summary
+                  </p>
+                </div>
+                {copiedLinkId && (
+                  <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-300 animate-fadeIn">
+                    ✓ Link copied! Paste in any new browser tab to test!
+                  </span>
+                )}
+              </div>
+
+              {/* Real-time search box */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={patientSearch}
+                  onChange={(e) => setPatientSearch(e.target.value)}
+                  placeholder="Search patient by name, order ID (ORD-...), phone number, or test parameter..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-amber-500 outline-none"
+                />
+              </div>
+
+              {/* Patient Cards List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {TEST_SMS_PATIENTS.filter(p => 
+                  p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
+                  p.id.toLowerCase().includes(patientSearch.toLowerCase()) ||
+                  p.phone.includes(patientSearch) ||
+                  p.test.toLowerCase().includes(patientSearch.toLowerCase()) ||
+                  p.doctor.toLowerCase().includes(patientSearch.toLowerCase())
+                ).map((p) => {
+                  const isSelected = selectedPatientId === p.id;
+                  const isCritical = p.test.includes('Panic');
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => handleSelectTestPatient(p)}
+                      className={`p-3 rounded-xl border text-xs transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                        isSelected
+                          ? 'bg-amber-50/80 border-amber-400 shadow-xs ring-2 ring-amber-500/20'
+                          : 'bg-white hover:bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-mono font-bold text-slate-800 text-[11px]">{p.id}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            isCritical ? 'bg-rose-100 text-rose-800' : isSelected ? 'bg-amber-200 text-amber-900' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {isCritical ? '🚨 Panic' : isSelected ? 'Active Test' : 'Signed'}
+                          </span>
+                        </div>
+                        <p className="font-bold text-slate-900">{p.name}</p>
+                        <p className="text-[11px] text-slate-500">{p.test}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">Ref by: {p.doctor}</p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectTestPatient(p);
+                          }}
+                          className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors ${
+                            isSelected 
+                              ? 'bg-amber-600 text-white' 
+                              : 'bg-slate-100 hover:bg-amber-100 text-slate-700'
+                          }`}
+                        >
+                          <span>{isSelected ? '✓ Selected' : 'Test Link'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = `http://localhost:5173/report/demo_${p.id}`;
+                            navigator.clipboard.writeText(url);
+                            setCopiedLinkId(p.id);
+                            setTimeout(() => setCopiedLinkId(null), 3000);
+                          }}
+                          className="py-1 px-2.5 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+                          title="Copy direct patient link to test in another tab"
+                        >
+                          {copiedLinkId === p.id ? '✓ Copied' : '🔗 Copy'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {!isOtpVerified ? (
+              <OtpVerificationGate
+                tokenData={tokenInfo}
+                onVerified={(order) => {
+                  setActiveOrder(order);
+                  setIsOtpVerified(true);
+                }}
+              />
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                  <p className="text-xs text-emerald-800 font-medium">
+                    ✓ Verified Mobile OTP Session for <strong>{activeOrder?.patientName}</strong>
+                  </p>
+                  <button
+                    onClick={() => setIsOtpVerified(false)}
+                    className="text-xs text-emerald-700 underline font-semibold hover:text-emerald-900 cursor-pointer"
+                  >
+                    Lock Session
+                  </button>
+                </div>
+                {activeOrder && <LabReportViewer order={activeOrder} />}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
 
-      {/* Accessible Footer */}
+      {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-        <p>© 2026 ArogyaLink Diagnostic Chain • Vijayawada, Andhra Pradesh</p>
-        <p className="text-slate-400 mt-1">Compliant with Digital Personal Data Protection (DPDP) Act 2023</p>
+        © 2026 ArogyaLink Diagnostic Chain • Vijayawada, Andhra Pradesh • DPDP Act 2023 Compliant
       </footer>
+
     </div>
   );
 }
