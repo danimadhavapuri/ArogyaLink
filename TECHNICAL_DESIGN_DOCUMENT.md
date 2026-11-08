@@ -145,14 +145,16 @@ Every access event—including SMS link dispatch, OTP verification, and report v
 ## 6. Clinical AI Mechanism & Patient Safety Safeguards
 
 ### 6.1 Deterministic Clinical Rule Intercept vs Generative AI
-A critical flaw in generic consumer LLMs is medical hallucination and lack of clinical urgency awareness. ArogyaLink employs a **hybrid clinical architecture**:
-1. High-precision, pre-validated clinical parameter templates translate complex indices (e.g. Haemoglobin, Fasting Glucose, LDL Cholesterol, TSH, Platelet count) into everyday plain language.
-2. Clinical guardrails prevent contradictory medical advice and prioritize lifestyle, dietary, and physician follow-up recommendations.
+A critical flaw in generic consumer LLMs is medical hallucination and lack of clinical urgency awareness. ArogyaLink employs a **hybrid clinical safety architecture** strictly compliant with the client's guidelines:
+1. **Rule-Derived Triggers**: Out-of-range flags are derived deterministically using the official report's biological reference ranges, never from speculative model guesses.
+2. **Locked Templates for 30 Common Tests**: Summaries use locked, pre-validated clinical templates for the 30 most common diagnostic investigations (including Haemoglobin, Fasting Glucose, LDL Cholesterol, TSH, and Platelet Count) to ensure medical precision.
+3. **Mandatory Full Report Linkage**: Every plain-language summary is permanently anchored to the complete, signed pathology report so patients always have access to full specimen and reference details.
+4. **Patient Flagging Mechanism**: If an explanation is unclear or confusing, patients can instantly flag the summary with one click, routing it directly to the Chief Pathologist.
 
 ### 6.2 Critical Potassium Safety Intercept (#1 Safety Rule)
-For life-threatening results—specifically serum Potassium $\ge 6.0\text{ mmol/L}$ (e.g. Farzana Begum, $6.8\text{ mmol/L}$):
+For life-threatening panic values—specifically serum Potassium $\ge 6.0\text{ mmol/L}$ (e.g. Farzana Begum, $6.8\text{ mmol/L}$):
 - **Automated AI summaries are strictly WITHHELD and BLOCKED.**
-- An unmissable, high-contrast **🚨 Red Emergency Alert Banner** is rendered, explicitly advising the patient that clinical callbacks are in progress.
+- An unmissable, high-contrast **🚨 Red Emergency Alert Banner** is rendered, explicitly advising the patient that clinical callbacks are in progress and providing an emergency hospital contact.
 - The server automatically creates a high-priority entry in the **Urgent Doctor Callbacks Queue** on the Front-Desk Console. Front-desk personnel must call the referring doctor directly and log clinical resolution notes before the task can be marked resolved.
 
 ### 6.3 26+ Indian Languages, Tenglish & Hinglish Translation Engine
@@ -162,7 +164,7 @@ To bridge language barriers across Coastal Andhra Pradesh:
 - **In-App Doubt Chat**: An integrated doubt assistant answers patient questions (e.g., *"What foods should I eat?"*, *"Is 10.2 anaemia?"*) directly within the secure sandbox, preventing patients from turning to unvetted external forums.
 
 ### 6.4 Closed-Loop Pathologist Audit Queue (50 Summaries/Week Quota)
-Patients can flag any summary as unclear or misleading. Flagged reports enter the **Chief Pathologist Audit Queue**, establishing an accountable human-in-the-loop review pipeline satisfying ISO 15189 and NABL clinical oversight requirements.
+Patients can flag any summary as unclear or misleading. Flagged reports enter the **Chief Pathologist Audit Queue**, establishing an accountable human-in-the-loop review pipeline where a pathologist reviews and signs off on a quota of **50 summaries per week**, satisfying ISO 15189 and NABL clinical oversight requirements.
 
 ---
 
