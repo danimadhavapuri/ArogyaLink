@@ -810,18 +810,19 @@ export default function App() {
                       <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
                         isCritical ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                       }`}>
-                        {isCritical ? '🚨 Critical Callback Scenario' : '✓ Normal Sign-off'}
+                        {isCritical ? 'Clinical Status: 🚨 Critical Panic Alert' : 'Clinical Status: Normal (Verified)'}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-2.5 rounded-lg border border-amber-200/80 font-mono text-[11px] text-slate-700">
                       <div className="truncate flex-1">
-                        📲 SMS: &ldquo;Dear {activePatient.name.split(' ')[0]}, your lab report is ready. Access: http://localhost:5173/report/demo_{activePatient.id} (72h)&rdquo;
+                        📲 SMS: &ldquo;Dear {activePatient.name.split(' ')[0]}, your lab report is ready. Access: {typeof window !== 'undefined' ? window.location.origin : ''}/report/demo_{activePatient.id} (72h)&rdquo;
                       </div>
                       <button
                         type="button"
                         onClick={() => {
-                          const url = `http://localhost:5173/report/demo_${activePatient.id}`;
+                          const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://arogyalink-sc22.onrender.com';
+                          const url = `${baseUrl}/report/demo_${activePatient.id}`;
                           navigator.clipboard.writeText(url);
                           setCopiedLinkId(activePatient.id);
                           setTimeout(() => setCopiedLinkId(null), 3000);

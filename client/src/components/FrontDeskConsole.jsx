@@ -51,6 +51,8 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState(null);
   const [previewOrder, setPreviewOrder] = useState(null);
+  const [remindedDocId, setRemindedDocId] = useState(null);
+  const [rosterMessage, setRosterMessage] = useState(null);
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -158,6 +160,7 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
       const data = await res.json();
       if (data.success) {
         setImportMessage('Patient flag signed off by Chief Pathologist.');
+        setFlaggedSummaries(prev => prev.map(f => (f.id === flagId || f.orderId === flagId) ? { ...f, status: 'RESOLVED', reviewedByPathologist: true, pathologistNotes: 'Reviewed test reference range against patient clinical history. Verified accurate.' } : f));
         fetchAllData();
       }
     } catch (err) {
@@ -175,8 +178,14 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
 
   // Send Reminder SMS to Doctor
   const handleSendDoctorReminder = (doctor) => {
-    setImportMessage(`SMS Reminder dispatched to ${doctor.name} (${doctor.phone}): "ArogyaLink AP: Dr. ${doctor.name}, you have ${doctor.patientCount} patient reports updated in your clinical portal."`);
-    setTimeout(() => setImportMessage(null), 5000);
+    const docKey = doctor.doctorKey || doctor.name || doctor.id;
+    setRemindedDocId(docKey);
+    setRosterMessage(`✓ SMS Reminder dispatched to ${doctor.name} (${doctor.phone}): "ArogyaLink AP: Dr. ${doctor.name}, you have ${doctor.patientCount || 0} patient reports updated."`);
+    setImportMessage(`✓ SMS Reminder dispatched to ${doctor.name} (${doctor.phone}): "ArogyaLink AP: Dr. ${doctor.name}, you have ${doctor.patientCount || 0} patient reports updated."`);
+    setTimeout(() => {
+      setRemindedDocId(null);
+      setRosterMessage(null);
+    }, 4000);
   };
 
   // Deduplicate orders by orderId so each patient record appears exactly once
@@ -702,6 +711,16 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
             </span>
           </div>
 
+          {rosterMessage && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs rounded-xl flex items-center justify-between animate-fadeIn shadow-xs font-semibold">
+              <div className="flex items-center gap-2">
+                <span className="text-base">📲</span>
+                <span>{rosterMessage}</span>
+              </div>
+              <button onClick={() => setRosterMessage(null)} className="text-emerald-700 hover:text-emerald-950 cursor-pointer text-sm font-bold">✕</button>
+            </div>
+          )}
+
           {/* Doctor Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {doctors.map((doc) => {
@@ -764,11 +783,15 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
                         e.stopPropagation();
                         handleSendDoctorReminder(doc);
                       }}
-                      className="flex-1 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-800 text-[11px] font-semibold rounded-lg border border-slate-200 flex items-center justify-center gap-1 transition-colors"
+                      className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        remindedDocId === (doc.doctorKey || doc.name || doc.id)
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-800 border-slate-200'
+                      }`}
                       title="Send SMS update to doctor"
                     >
-                      <BellRing className="w-3 h-3 text-teal-600" />
-                      <span>Remind Doctor</span>
+                      <BellRing className={`w-3 h-3 ${remindedDocId === (doc.doctorKey || doc.name || doc.id) ? 'text-white animate-bounce' : 'text-teal-600'}`} />
+                      <span>{remindedDocId === (doc.doctorKey || doc.name || doc.id) ? '✓ Dispatched to Doctor!' : 'Remind Doctor'}</span>
                     </button>
                   </div>
                 </div>
@@ -804,10 +827,14 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
                   <div className="flex items-center gap-2 text-xs">
                     <button
                       onClick={() => activeDocObj && handleSendDoctorReminder(activeDocObj)}
-                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className={`font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                        remindedDocId
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-teal-600 hover:bg-teal-700 text-white'
+                      }`}
                     >
                       <Send className="w-3 h-3" />
-                      <span>Send Summary to Doctor Phone</span>
+                      <span>{remindedDocId ? '✓ Summary Dispatched via SMS!' : 'Send Summary to Doctor Phone'}</span>
                     </button>
                   </div>
                 </div>
@@ -1021,10 +1048,10 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
                   </div>
 
                   <div>
-                    {flag.reviewedByPathologist ? (
-                      <span className="text-xs font-bold text-emerald-700 flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                    {(flag.reviewedByPathologist || flag.status === 'RESOLVED') ? (
+                      <span className="text-xs font-bold text-emerald-700 flex items-center gap-1.5 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-300 shadow-xs">
                         <Check className="w-4 h-4 text-emerald-600" />
-                        Signed Off
+                        <span>✓ Signed Off by Pathologist</span>
                       </span>
                     ) : (
                       <button

@@ -211,6 +211,7 @@ export function resolveFlaggedSummary(id, resolutionNotes) {
     flaggedSummaries[index] = {
       ...flaggedSummaries[index],
       status: 'RESOLVED',
+      reviewedByPathologist: true,
       resolvedBy: 'Dr. Pathologist (Quality Head)',
       resolutionNotes: resolutionNotes || 'Pathologist reviewed and clinically approved explanation.',
       resolvedAt: new Date().toISOString()
