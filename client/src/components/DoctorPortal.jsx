@@ -26,7 +26,7 @@ const DOCTORS_LIST = [
 export default function DoctorPortal({ onSelectPatientReport, currentUser, onLogout }) {
   // If a doctor is logged in, isolate strictly to their profile
   const getDoctorProfile = () => {
-    if (!currentUser) return DOCTORS_LIST[0];
+    if (!currentUser || currentUser.role === 'staff') return DOCTORS_LIST[0];
     const match = DOCTORS_LIST.find(d => 
       (currentUser.doctorName || currentUser.name || '').toLowerCase().includes(d.id.toLowerCase())
     );
@@ -131,12 +131,12 @@ export default function DoctorPortal({ onSelectPatientReport, currentUser, onLog
         </div>
       </div>
 
-      {/* Doctor Quick Switcher Pill (Only shown when not logged in) */}
-      {!currentUser && (
+      {/* Doctor Switcher Pill (Shown in Staff Supervision or Reviewer Demo mode) */}
+      {(!currentUser || currentUser?.role === 'staff') && (
         <div className="bg-slate-100 p-1.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-semibold text-slate-600 px-3 flex items-center gap-1.5">
             <UserCheck className="w-3.5 h-3.5 text-teal-600" />
-            Reviewer Quick Switcher:
+            {currentUser?.role === 'staff' ? 'Staff Supervision — Select Doctor Dashboard:' : 'Reviewer Quick Switcher:'}
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
             {DOCTORS_LIST.map((doc) => (

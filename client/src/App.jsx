@@ -284,10 +284,20 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50/70 relative flex flex-col font-sans overflow-x-hidden">
       
+      {/* Dynamic Animated Medical Ambient Aurora Orbs */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden medical-grid-pattern">
+        {/* Orb 1: Emerald glow at top-left */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-300/30 via-teal-200/25 to-transparent blur-3xl animate-orb-1"></div>
+        {/* Orb 2: Teal-Cyan glow at top-right */}
+        <div className="absolute top-24 -right-32 w-[30rem] h-[30rem] rounded-full bg-gradient-to-bl from-teal-300/25 via-cyan-200/20 to-transparent blur-3xl animate-orb-2"></div>
+        {/* Orb 3: Soft Amber/Emerald glow at center-bottom */}
+        <div className="absolute -bottom-40 left-1/4 w-[36rem] h-[36rem] rounded-full bg-gradient-to-t from-emerald-200/20 via-teal-100/15 to-transparent blur-3xl animate-orb-3"></div>
+      </div>
+
       {/* Top Application Header with Animated Shimmer Spark Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs relative">
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 shadow-xs relative">
         {/* Animated Highlighting Spark Bar across top */}
         <div className="h-[3.5px] w-full bg-gradient-to-r from-emerald-500 via-teal-200 via-emerald-400 to-teal-500 animate-spark-bar shadow-[0_0_15px_rgba(16,185,129,0.75)]"></div>
 
@@ -383,7 +393,7 @@ export default function App() {
       </header>
 
       {/* Main Body Canvas */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 relative z-10">
         
         {/* ============================================================ */}
         {/* VIEW 1: REFERRING DOCTOR PORTAL */}
@@ -391,8 +401,8 @@ export default function App() {
         {activeTab === 'doctor' && (
           <div>
             {!doctorUser && !staffUser ? (
-              /* Dedicated Doctor Sign In & Sign Up Page */
-              <div className="max-w-md mx-auto my-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+              /* Dedicated Doctor Sign In & Sign Up Page with Glassmorphism & Glow */
+              <div className="max-w-md mx-auto my-8 bg-white/95 backdrop-blur-md rounded-3xl border border-white/80 shadow-xl overflow-hidden animate-fadeIn glow-emerald">
                 <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white text-center">
                   <div className="w-12 h-12 bg-white/20 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-2 backdrop-blur-xs">
                     🩺
@@ -555,8 +565,8 @@ export default function App() {
         {activeTab === 'frontdesk' && (
           <div>
             {!staffUser ? (
-              /* Dedicated Staff Sign In & Sign Up Page */
-              <div className="max-w-md mx-auto my-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+              /* Dedicated Staff Sign In & Sign Up Page with Glassmorphism & Glow */
+              <div className="max-w-md mx-auto my-8 bg-white/95 backdrop-blur-md rounded-3xl border border-white/80 shadow-xl overflow-hidden animate-fadeIn glow-teal">
                 <div className="bg-gradient-to-r from-teal-700 to-slate-800 p-6 text-white text-center">
                   <div className="w-12 h-12 bg-white/20 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-2 backdrop-blur-xs">
                     🏢
@@ -855,8 +865,8 @@ export default function App() {
 
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+      {/* Footer with Glassmorphic Backdrop */}
+      <footer className="bg-white/80 backdrop-blur-md border-t border-slate-200/80 py-4 text-center text-xs text-slate-500 relative z-10">
         © 2026 ArogyaLink Diagnostic Chain • Vijayawada, Andhra Pradesh • DPDP Act 2023 Compliant
       </footer>
 

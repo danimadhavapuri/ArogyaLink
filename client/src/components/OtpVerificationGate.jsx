@@ -42,7 +42,7 @@ export default function OtpVerificationGate({ tokenData, onVerified }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token: tokenData.token,
+          token: tokenData?.token || '',
           enteredOtp: enteredCode
         })
       });
@@ -82,7 +82,7 @@ export default function OtpVerificationGate({ tokenData, onVerified }) {
       </div>
 
       {/* Main Login Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-white/80 p-6 sm:p-8 shadow-xl glow-emerald">
         <div className="w-12 h-12 bg-teal-50 border border-teal-200 rounded-2xl flex items-center justify-center text-teal-600 mb-4 mx-auto">
           <Lock className="w-6 h-6" />
         </div>
@@ -93,9 +93,9 @@ export default function OtpVerificationGate({ tokenData, onVerified }) {
         <p className="text-sm text-center text-slate-500 mt-1 mb-6">
           We sent a 4-digit code to{' '}
           <span className="font-medium text-slate-800">
-            {tokenData.maskedPhone || '+91 98765 *****'}
+            {tokenData?.maskedPhone || '+91 98765 *****'}
           </span>{' '}
-          for patient <strong className="text-slate-800">{tokenData.patientName}</strong>.
+          for patient <strong className="text-slate-800">{tokenData?.patientName || 'Valued Patient'}</strong>.
         </p>
 
         {/* Demo Helper Banner for Reviewer */}

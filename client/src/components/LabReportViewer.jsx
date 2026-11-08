@@ -1,4 +1,5 @@
 import React from 'react';
+import AiSummaryCard from './AiSummaryCard';
 import { 
   FileText, 
   Printer, 
@@ -56,14 +57,16 @@ export default function LabReportViewer({ order, onBack, children }) {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Top Action Bar (Hidden when printing) */}
-      <div className="flex items-center justify-between no-print">
-        <button
-          onClick={onBack}
-          className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Exit to Login</span>
-        </button>
+      <div className="flex items-center justify-end no-print">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer mr-auto"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </button>
+        )}
 
         <button
           onClick={handlePrint}
@@ -234,7 +237,7 @@ export default function LabReportViewer({ order, onBack, children }) {
       </div>
 
       {/* Slot for Step 4.4 AI Multi-Language Summary Component */}
-      {children}
+      {children || <AiSummaryCard order={order} />}
     </div>
   );
 }

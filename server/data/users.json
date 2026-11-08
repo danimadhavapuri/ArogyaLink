@@ -48,5 +48,52 @@
     "phone": "+91 98660 55443",
     "employeeId": "STF-VJ-104",
     "createdAt": "2026-11-01T08:00:00Z"
+  },
+  {
+    "id": "USR-STF-005",
+    "email": "staff@arogyalink.com",
+    "password": "1234",
+    "name": "Dani",
+    "role": "staff",
+    "specialization": "General Medicine",
+    "center": "Company A Lab Network, Vijayawada",
+    "phone": "+91 98480 00000",
+    "createdAt": "2026-11-06T09:44:10.912Z"
+  },
+  {
+    "id": "USR-STF-006",
+    "email": "dani@arogya.in",
+    "password": "1234",
+    "name": "Dani",
+    "role": "staff",
+    "specialization": "General Medicine",
+    "center": "Company A Lab Network, Vijayawada",
+    "phone": "+91 98480 00000",
+    "createdAt": "2026-11-06T10:08:25.439Z"
+  },
+  {
+    "id": "USR-DOC-007",
+    "email": "dani@arogyalink.in",
+    "password": "12345",
+    "name": "Dr. M. Dani",
+    "role": "doctor",
+    "doctorName": "Dr. M. Dani",
+    "specialization": "General Medicine",
+    "center": "Company A Lab Network, Vijayawada",
+    "phone": "+91 98480 11223",
+    "createdAt": "2026-11-07T07:32:19.169Z"
+  },
+  {
+    "id": "USR-DOC-008",
+    "email": "chaitanya@arogyalink.in",
+    "password": "securePass123",
+    "name": "Dr. Chaitanya Varma",
+    "role": "doctor",
+    "doctorName": "Dr. Chaitanya Varma",
+    "specialization": "Endocrinologist",
+    "specialty": "Endocrinologist",
+    "center": "Vijayawada Diabetes Care",
+    "phone": "+91 98480 00000",
+    "createdAt": "2026-11-08T08:41:45.394Z"
   }
 ]

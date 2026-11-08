@@ -39,7 +39,8 @@ export default function AiSummaryCard({ order }) {
       setLoading(true);
       try {
                 // Fetch core summary
-        const sumRes = await fetch(`/api/reports/${order.orderId}/summary`);
+        const oid = order?.orderId || order?.id;
+        const sumRes = await fetch(`/api/reports/${oid}/summary`);
         const sumJson = await sumRes.json();
         if (sumJson.success) {
           // Accept both sumJson.data and sumJson.summary
@@ -61,7 +62,7 @@ export default function AiSummaryCard({ order }) {
     };
 
     fetchData();
-  }, [order.orderId]);
+  }, [order?.orderId, order?.id]);
 
   // Handle language switch
   const handleLanguageChange = async (langCode) => {
@@ -72,7 +73,8 @@ export default function AiSummaryCard({ order }) {
     if (langCode !== 'en' && langCode !== 'te' && langCode !== 'hi') {
       setTranslating(true);
       try {
-        const res = await fetch(`/api/reports/${order.orderId}/translate`, {
+        const oid = order?.orderId || order?.id;
+        const res = await fetch(`/api/reports/${oid}/translate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ targetLanguage: langCode })
@@ -96,7 +98,8 @@ export default function AiSummaryCard({ order }) {
 
     setAsking(true);
     try {
-      const res = await fetch(`/api/reports/${order.orderId}/ask-ai`, {
+      const oid = order?.orderId || order?.id;
+      const res = await fetch(`/api/reports/${oid}/ask-ai`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +122,8 @@ export default function AiSummaryCard({ order }) {
   const handleFlagSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/reports/${order.orderId}/flag`, {
+      const oid = order?.orderId || order?.id;
+      const res = await fetch(`/api/reports/${oid}/flag`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,7 +164,7 @@ export default function AiSummaryCard({ order }) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-teal-50/80 via-white to-slate-50 border-2 border-teal-200/80 rounded-2xl p-5 sm:p-7 shadow-xs space-y-6 no-print">
+    <div className="bg-white/95 backdrop-blur-md border border-teal-200/90 shadow-md rounded-2xl p-5 sm:p-7 space-y-6 no-print glow-teal">
       {/* Header with Bilingual Selector */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-teal-100/80 pb-4">
         <div className="flex items-center gap-2.5">

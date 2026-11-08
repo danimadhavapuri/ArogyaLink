@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ArogyaLink - Technical Design Document (TDD)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+    h1 { color: #0f172a; border-bottom: 2px solid #0d9488; padding-bottom: 12px; margin-bottom: 8px; }
+    h2 { color: #0f766e; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 36px; }
+    h3 { color: #334155; margin-top: 24px; }
+    p, li { font-size: 14px; color: #334155; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #0f766e; }
+    pre { background: #0f172a; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.4; }
+    pre code { background: none; color: inherit; padding: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+    th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; color: #0f172a; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .badge { display: inline-block; background: #ccfbf1; color: #0f766e; font-weight: bold; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+    .emergency { background: #ffe4e6; color: #be123c; border-left: 4px solid #e11d48; padding: 12px; margin: 16px 0; border-radius: 4px; }
+    .meta-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 24px; font-size: 13px; }
+    @media print {
+      body { max-width: 100%; margin: 0; padding: 16px; }
+      pre { white-space: pre-wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏥 ArogyaLink — Technical Design Document (TDD)</h1>
+  <p><strong>Diagnostic Lab Automated Report-Delivery Portal for Patients and Referring Doctors</strong></p>
+
+  <div class="meta-box">
+    <strong>Author:</strong> Dani Madhavapuri (BCA, Aditya Degree Women's College, Rajahmundry)<br>
+    <strong>Role:</strong> Software Engineering Intern Candidate, Isocode Labs Take-Home Task<br>
+    <strong>Client:</strong> Company A, Coastal Andhra Pradesh Diagnostic Network (Vijayawada • 6 Central Labs & 38 Centres)<br>
+    <strong>Public GitHub Repository:</strong> <a href="https://github.com/danimadhavapuri/ArogyaLink.git" target="_blank">https://github.com/danimadhavapuri/ArogyaLink.git</a>
+  </div>
+
+  <h2>1. Executive Summary & Problem Context</h2>
+  <p>Company A operates a diagnostic chain with 6 central labs and 38 outpatient collection centres across Vijayawada and coastal Andhra Pradesh. Their existing workflow involved 260 staff using 9 shared phones to manually dispatch unencrypted signed PDF reports over WhatsApp and SMS.</p>
+  <p>This process incurred significant operational friction and legal risks under the <strong>Digital Personal Data Protection (DPDP) Act 2023</strong>: reports remained permanently in chats, 15 reports a month were misdirected to wrong numbers, patients overwhelmed front-desks with status inquiries (40 staff hours/day), and critical panic results (e.g. Potassium 6.8 mmol/L) went unintercepted.</p>
+  <p><strong>ArogyaLink</strong> introduces a zero-install, secure web portal governed by 72-hour signed expiring links, mobile OTP authentication, deterministic clinical AI summaries in 26+ Indian languages (including Telugu, Tenglish, and Hinglish), and an automated panic-value emergency intercept.</p>
+
+  <h2>2. Labeled Assumptions (Directly from Client Brief)</h2>
+  <ul>
+    <li><strong>[ASSUMPTION-01] Patient Volume:</strong> 2,000 patients/day over 360 operational days/year = 7,20,000 diagnostic orders annually.</li>
+    <li><strong>[ASSUMPTION-02] Front-Desk Inefficiency:</strong> 30% of patients call or visit about status (600 visits/day × 4 mins = 40 staff hours/day × 360 days = 14,400 hours × ₹250 = ₹36 Lakh/year).</li>
+    <li><strong>[ASSUMPTION-03] Paper Waste:</strong> 40% of reports printed and hand-delivered (2,88,000 reports × ₹12 = ₹34.56 Lakh). Total operational waste equals ₹70.56 Lakh annually.</li>
+    <li><strong>[ASSUMPTION-04] Family Phone Sharing:</strong> One mobile number frequently covers multi-generational families in semi-urban and rural Andhra Pradesh.</li>
+    <li><strong>[ASSUMPTION-05] Statutory Retention Windows:</strong> 72 hours for patient expiring links under DPDP data minimization; 90 days active consultation window for referring clinicians.</li>
+    <li><strong>[ASSUMPTION-06] Budget & Delivery Milestone:</strong> ₹6.5 Lakh budget across 6 weeks targeting an 80% digital adoption rate and 60% call reduction within 3 months.</li>
+  </ul>
+
+  <h2>3. System Architecture & Topology</h2>
+  <pre><code>+-----------------------------------------------------------------------------------+
+|                                 CLIENT TIER                                       |
+|  (Vite + React 18 + Tailwind CSS + Lucide Icons + Responsive Glassmorphic UI)     |
+|                                                                                   |
+|  +-----------------------+  +-----------------------+  +-----------------------+  |
+|  |  Patient OTP Portal   |  |   Referring Doctor    |  |  Front-Desk Staff     |  |
+|  |  (72h Expiring Link,  |  |   Portal (90-Day      |  |  Console (Search,     |  |
+|  |   Multilingual AI,    |  |   Active Window,      |  |   Callbacks, Rosters, |  |
+|  |   Emergency Banner)   |  |   Data Isolation)     |  |   Audit Queue, LIS)   |  |
+|  +-----------------------+  +-----------------------+  +-----------------------+  |
++------------------------------------------+----------------------------------------+
+                                           | HTTPS / REST JSON
++------------------------------------------v----------------------------------------+
+|                                 SERVER TIER                                       |
+|                  (Node.js + Express.js API Gateway & Services)                    |
+|                                                                                   |
+|  +------------------------+  +------------------------+  +---------------------+  |
+|  |  tokenService.js       |  |  aiSummaryService.js   |  |  csvParser.js       |  |
+|  |  HMAC-SHA256 Expiring  |  |  Clinical Template     |  |  LIS Daily Batch    |  |
+|  |  Links & Expiry Math   |  |  Rules Engine          |  |  Spreadsheet Ingest |  |
+|  +------------------------+  +------------------------+  +---------------------+  |
+|                                                                                   |
+|  +------------------------+  +------------------------+  +---------------------+  |
+|  |  auditService.js       |  |  translationService.js |  |  store.js           |  |
+|  |  DPDP 2023 Masked      |  |  26+ Indian Languages, |  |  Reactive Store,    |  |
+|  |  Immutable Audit Log   |  |  Telugu, Tenglish,     |  |  Deduplication &   |  |
+|  |  Events                |  |  Hinglish Engine       |  |  Callback Seeding   |  |
+|  +------------------------+  +------------------------+  +---------------------+  |
++-----------------------------------------------------------------------------------+</code></pre>
+
+  <h2>4. Core Data Models</h2>
+  <p>The system defines clean, structured interfaces for Orders, Users, Audit Logs, and Callback Tasks:</p>
+  <pre><code>// Diagnostic Order Schema
+interface DiagnosticOrder {
+  orderId: string;              // e.g. "ORD-71204"
+  patientName: string;          // e.g. "Lakshmi Prasanna K"
+  age: number; gender: string;
+  patientPhone: string;         // e.g. "+91 98765 43210"
+  testName: string; parameter: string;
+  result: string | number; unit: string;
+  referenceRange: string; status: 'Ready' | 'Processing' | 'Critical';
+  isCritical: boolean; referringDoctor: string;
+  collectionCentre: string; createdAt: string;
+}</code></pre>
+
+  <h2>5. Security, Cryptography & DPDP Act 2023 Compliance</h2>
+  <ul>
+    <li><strong>72-Hour Signed Expiring Links:</strong> Generated via HMAC-SHA256 signatures binding Order ID with an expiry timestamp. Tampering with parameters invalidates the cryptographic hash immediately.</li>
+    <li><strong>2-Factor Mobile OTP Gate:</strong> Entering the URL presents a 4-digit OTP verification gate sent to the registered mobile number.</li>
+    <li><strong>Phone Number Masking:</strong> Personal identifiers are automatically masked across all screens and audit logs (e.g. <code>+91 98765 *****</code>).</li>
+    <li><strong>Immutable Audit Logging:</strong> Every decryption, OTP challenge, and dispatch event is logged with timestamps and masked credentials for statutory regulatory inspection.</li>
+  </ul>
+
+  <h2>6. Clinical AI Mechanism & Patient Safety Safeguards</h2>
+  <div class="emergency">
+    <strong>🚨 The #1 Safety Rule (Critical Potassium Intercept):</strong><br>
+    For life-threatening results—specifically serum Potassium ≥ 6.0 mmol/L (Farzana Begum, 6.8 mmol/L):
+    <ul>
+      <li>Automated AI summaries are strictly <strong>WITHHELD and BLOCKED</strong>.</li>
+      <li>An unmissable high-contrast <strong>Red Emergency Banner</strong> appears directing the patient to hospital care.</li>
+      <li>The server automatically creates an <strong>Urgent Doctor Callback Task</strong> on the front-desk console requiring staff to confirm direct contact with the referring physician.</li>
+    </ul>
+  </div>
+  <p><strong>Multilingual Translation:</strong> Synthesizes plain-language summaries across 26+ Indian languages, with full support for Telugu (తెలుగు), Tenglish, Hinglish, and Hindi, backed by an in-app doubt chat assistant and a closed-loop Pathologist Audit Queue (50 summaries/week).</p>
+
+  <h2>7. UI/UX Decisions & Clinical Accessibility</h2>
+  <ul>
+    <li><strong>Medical Aurora Ambient Background:</strong> Soft floating emerald and teal orbs with a geometric dot matrix pattern replace sterile white backgrounds.</li>
+    <li><strong>Glassmorphic Elevated Cards:</strong> High-contrast readable typography optimized for low-end mobile screens and elderly patients.</li>
+    <li><strong>Search-Driven Front-Desk:</strong> Records are dynamically revealed through intelligent searching by name, mobile, order ID, or parameter, sorted by clinical priority triage (Critical panic values first).</li>
+    <li><strong>Accessible Printable Report:</strong> Formatted to match standard pathology paper with biological reference ranges, doctor signatures, and a dedicated <code>@media print</code> PDF stylesheet.</li>
+  </ul>
+
+  <h2>8. What Was Cut & What We Would Do Next</h2>
+  <p><strong>What Was Cut (Per Problem Brief Out-of-Scope Constraints):</strong></p>
+  <ul>
+    <li>Direct modifications to the legacy desktop LIS (solved via non-invasive CSV batch import instead).</li>
+    <li>Online test booking and e-commerce payment gateways.</li>
+    <li>Home collection phlebotomist GPS dispatch.</li>
+  </ul>
+  <p><strong>What We Would Do Next (Production Roadmap):</strong></p>
+  <ul>
+    <li>Production WhatsApp Business Cloud API integration.</li>
+    <li>ABHA (Ayushman Bharat Digital Mission) Health ID federation.</li>
+    <li>Direct analyzer machine HL7/FHIR MLLP protocol bridges.</li>
+  </ul>
+
+  <h2>9. Verification & Automated Test Suite</h2>
+  <p>Node.js native test runner executed on <code>tests/api.test.js</code>:</p>
+  <pre><code>✔ Step 6.1 - Automated Test Suite: ArogyaLink Portal Core Services
+  ✔ Security: Generate valid 72-hour signed expiring token
+  ✔ Security: Reject tampered or forged HMAC tokens
+  ✔ Compliance: Record and mask personal phone in audit logs
+  ✔ Clinical Safety: Intercept critical panic values (Potassium 6.8)
+  ✔ AI Summary: Generate multi-lingual guidance for out-of-range value (Haemoglobin 10.2)
+  ✔ Auth: Authenticate Doctor with valid credentials
+  ✔ Auth: Authenticate Staff with valid credentials
+  ✔ Auth: Reject incorrect password
+  ✔ Auth: Register new referring doctor and verify profile
+  ✔ Isolation: Doctor only sees their referred patients
+  ✔ LIS CSV: Parse batch CSV format correctly
+11 tests passed | 0 failed | 100% pass rate</code></pre>
+
+</body>
+</html>
