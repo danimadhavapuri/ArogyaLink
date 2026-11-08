@@ -286,20 +286,24 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       
-      {/* Top Application Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
+      {/* Top Application Header with Animated Shimmer Spark Bar */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs relative">
+        {/* Animated Highlighting Spark Bar across top */}
+        <div className="h-[3.5px] w-full bg-gradient-to-r from-emerald-500 via-teal-200 via-emerald-400 to-teal-500 animate-spark-bar shadow-[0_0_15px_rgba(16,185,129,0.75)]"></div>
+
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           
-          {/* Brand Logo & Network Info */}
+          {/* Brand Logo & Network Info with Glowing Spark Accent */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(16,185,129,0.45)] ring-2 ring-emerald-400/50 transform hover:scale-105 transition-all">
               ఆ
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold text-slate-800 tracking-tight">ArogyaLink</h1>
-                <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                  DPDP 2023 Verified
+                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.35)] flex items-center gap-1.5 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>✨ DPDP 2023 Verified</span>
                 </span>
               </div>
               <p className="text-xs text-slate-500">Coastal AP Diagnostic Network • Vijayawada (6 Labs & 38 Centres)</p>
@@ -464,7 +468,7 @@ export default function App() {
                             value={docName}
                             onChange={(e) => setDocName(e.target.value)}
                             placeholder="e.g. Dr. K. Venkat"
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-white focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 focus:shadow-[0_0_12px_rgba(16,185,129,0.25)] outline-none transition-all duration-200"
                           />
                         </div>
                         <div>
@@ -476,7 +480,7 @@ export default function App() {
                             value={docSpecialty}
                             onChange={(e) => setDocSpecialty(e.target.value)}
                             placeholder="e.g. Diabetologist, Cardiologist"
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-white focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 focus:shadow-[0_0_12px_rgba(16,185,129,0.25)] outline-none transition-all duration-200"
                           />
                         </div>
                         <div>
@@ -488,7 +492,7 @@ export default function App() {
                             value={docClinic}
                             onChange={(e) => setDocClinic(e.target.value)}
                             placeholder="e.g. Coastal Heart Care, Governorpet"
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-white focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 focus:shadow-[0_0_12px_rgba(16,185,129,0.25)] outline-none transition-all duration-200"
                           />
                         </div>
                       </>
@@ -504,7 +508,7 @@ export default function App() {
                         value={docEmail}
                         onChange={(e) => setDocEmail(e.target.value)}
                         placeholder="doctor@arogyalink.in"
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                        className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-white focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 focus:shadow-[0_0_12px_rgba(16,185,129,0.25)] outline-none transition-all duration-200"
                       />
                     </div>
 
@@ -518,7 +522,7 @@ export default function App() {
                         value={docPassword}
                         onChange={(e) => setDocPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                        className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-white focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 focus:shadow-[0_0_12px_rgba(16,185,129,0.25)] outline-none transition-all duration-200"
                       />
                     </div>
 
@@ -618,7 +622,7 @@ export default function App() {
                             value={staffName}
                             onChange={(e) => setStaffName(e.target.value)}
                             placeholder="e.g. Ramesh Kumar"
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                            className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-teal-400 hover:bg-white focus:bg-white focus:border-teal-600 focus:ring-4 focus:ring-teal-600/20 focus:shadow-[0_0_12px_rgba(13,148,136,0.25)] outline-none transition-all duration-200"
                           />
                         </div>
                         <div>
@@ -630,7 +634,7 @@ export default function App() {
                             value={staffBranch}
                             onChange={(e) => setStaffBranch(e.target.value)}
                             placeholder="e.g. Governorpet Centre, Vijayawada"
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                            className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-teal-400 hover:bg-white focus:bg-white focus:border-teal-600 focus:ring-4 focus:ring-teal-600/20 focus:shadow-[0_0_12px_rgba(13,148,136,0.25)] outline-none transition-all duration-200"
                           />
                         </div>
                       </>
@@ -646,7 +650,7 @@ export default function App() {
                         value={staffEmail}
                         onChange={(e) => setStaffEmail(e.target.value)}
                         placeholder="staff@arogyalink.in"
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                        className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-teal-400 hover:bg-white focus:bg-white focus:border-teal-600 focus:ring-4 focus:ring-teal-600/20 focus:shadow-[0_0_12px_rgba(13,148,136,0.25)] outline-none transition-all duration-200"
                       />
                     </div>
 
@@ -660,7 +664,7 @@ export default function App() {
                         value={staffPassword}
                         onChange={(e) => setStaffPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-teal-500 outline-none"
+                        className="w-full px-3.5 py-2.5 text-xs bg-slate-50/50 border border-slate-200 rounded-xl hover:border-teal-400 hover:bg-white focus:bg-white focus:border-teal-600 focus:ring-4 focus:ring-teal-600/20 focus:shadow-[0_0_12px_rgba(13,148,136,0.25)] outline-none transition-all duration-200"
                       />
                     </div>
 
@@ -692,33 +696,32 @@ export default function App() {
         {/* ============================================================ */}
         {activeTab === 'patient' && (
           <div className="space-y-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center justify-between text-xs text-amber-900">
+            {/* Clean Info Strip (No redundant return button) */}
+            <div className="bg-amber-50/80 border border-amber-200 rounded-2xl px-4 py-2.5 text-xs text-amber-900 flex items-center justify-between shadow-2xs">
               <div className="flex items-center gap-2">
-                <span>📱 <strong>Patient SMS Link Simulator:</strong> This is the exact screen a patient sees when opening their safe 72-hour link from SMS/WhatsApp.</span>
+                <span>📱</span>
+                <span><strong>Patient SMS Link Simulator:</strong> Testing safe 72-hour expiring links and mobile OTP verification under India&rsquo;s DPDP Act 2023.</span>
               </div>
-              <button
-                onClick={() => setActiveTab('doctor')}
-                className="bg-white border border-amber-300 text-amber-900 font-bold px-3 py-1 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer text-[11px]"
-              >
-                ← Return to Doctor & Staff Portal
-              </button>
+              <span className="text-[11px] font-bold text-amber-800 bg-amber-200/80 px-2.5 py-0.5 rounded-full">
+                72h Expiring Token Gate
+              </span>
             </div>
 
-            {/* Reviewer Patient Selector & Search: Easily inspect any patient's report */}
-            <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-2xs space-y-3">
+            {/* Reviewer Patient Selector & Search (Clean, compact, no huge boxes) */}
+            <div className="bg-white border border-amber-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <span>🔍</span>
-                    <span>Patient Report Directory & SMS Link Simulator:</span>
+                    <span>Test Patient Expiring Link & OTP Gate:</span>
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Search and test how each patient verifies via OTP and views their report & AI summary
+                    Select a patient scenario or search by name to test their 4-digit OTP access and multilingual AI summary
                   </p>
                 </div>
                 {copiedLinkId && (
                   <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-300 animate-fadeIn">
-                    ✓ Link copied! Paste in any new browser tab to test!
+                    ✓ Link copied to clipboard!
                   </span>
                 )}
               </div>
@@ -729,85 +732,98 @@ export default function App() {
                   type="text"
                   value={patientSearch}
                   onChange={(e) => setPatientSearch(e.target.value)}
-                  placeholder="Search patient by name, order ID (ORD-...), phone number, or test parameter..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-amber-500 outline-none"
+                  placeholder="Search patient by name, order ID (e.g. ORD-71204), phone number..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-8 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
                 />
+                {patientSearch && (
+                  <button
+                    onClick={() => setPatientSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-bold text-xs cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
 
-              {/* Patient Cards List */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {/* Scenario Quick Selector Pills (Compact horizontal chips) */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] font-bold text-slate-500 mr-1">Select Patient Scenario:</span>
                 {TEST_SMS_PATIENTS.filter(p => 
+                  !patientSearch.trim() ||
                   p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
                   p.id.toLowerCase().includes(patientSearch.toLowerCase()) ||
                   p.phone.includes(patientSearch) ||
-                  p.test.toLowerCase().includes(patientSearch.toLowerCase()) ||
-                  p.doctor.toLowerCase().includes(patientSearch.toLowerCase())
+                  p.test.toLowerCase().includes(patientSearch.toLowerCase())
                 ).map((p) => {
                   const isSelected = selectedPatientId === p.id;
                   const isCritical = p.isUrgent || p.test.includes('Panic') || p.test.includes('Potassium');
                   return (
-                    <div
+                    <button
                       key={p.id}
+                      type="button"
                       onClick={() => handleSelectTestPatient(p)}
-                      className={`p-3 rounded-xl border text-xs transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-amber-50/80 border-amber-400 shadow-xs ring-2 ring-amber-500/20'
-                          : 'bg-white hover:bg-slate-50 border-slate-200'
+                          ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-500/20 font-bold'
+                          : 'bg-slate-100 hover:bg-amber-50 text-slate-700 border border-slate-200'
                       }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-mono font-bold text-slate-800 text-[11px]">{p.id}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                            isCritical ? 'bg-rose-100 text-rose-800' : isSelected ? 'bg-amber-200 text-amber-900' : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {isCritical ? '🚨 Panic' : isSelected ? 'Active Test' : 'Signed'}
-                          </span>
-                        </div>
-                        <p className="font-bold text-slate-900">{p.name}</p>
-                        <p className="text-[11px] text-slate-500">{p.test}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">Ref: {p.doctor}</p>
-                        
-                        {/* Live SMS Message Preview */}
-                        <div className="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200/80 font-mono text-[10px] text-slate-600 select-all leading-relaxed">
-                          📲 SMS: "Dear {p.name.split(' ')[0]}, your lab report is ready. Access: http://localhost:5173/report/demo_{p.id} (72h)"
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectTestPatient(p);
-                          }}
-                          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-colors ${
-                            isSelected 
-                              ? 'bg-amber-600 text-white shadow-2xs' 
-                              : 'bg-slate-100 hover:bg-amber-100 text-slate-700'
-                          }`}
-                        >
-                          <span>{isSelected ? '✓ Testing Below' : '▶ Test Link'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const url = `http://localhost:5173/report/demo_${p.id}`;
-                            navigator.clipboard.writeText(url);
-                            setCopiedLinkId(p.id);
-                            setTimeout(() => setCopiedLinkId(null), 3000);
-                          }}
-                          className="py-1.5 px-3 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
-                          title="Copy direct patient link to clipboard"
-                        >
-                          {copiedLinkId === p.id ? '✓ Copied' : '🔗 Copy Link'}
-                        </button>
-                      </div>
-                    </div>
+                      <span>{p.name.split(' ')[0]}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        isCritical 
+                          ? 'bg-rose-100 text-rose-800' 
+                          : isSelected 
+                          ? 'bg-amber-800 text-amber-100' 
+                          : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {p.id}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
+
+              {/* Active Selected Patient Test Link Card (Single clean card) */}
+              {(() => {
+                const activePatient = TEST_SMS_PATIENTS.find(p => p.id === selectedPatientId) || TEST_SMS_PATIENTS[0];
+                const isCritical = activePatient.isUrgent || activePatient.test.includes('Panic') || activePatient.test.includes('Potassium');
+                return (
+                  <div className="mt-2 p-3.5 bg-gradient-to-r from-amber-50/90 to-orange-50/60 rounded-xl border border-amber-300 shadow-2xs space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-slate-800 text-xs bg-white px-2 py-0.5 rounded-lg border border-amber-200">
+                          {activePatient.id}
+                        </span>
+                        <strong className="text-sm text-slate-900">{activePatient.name}</strong>
+                        <span className="text-xs text-slate-500 hidden sm:inline">• {activePatient.maskedPhone} • Ref: {activePatient.doctor}</span>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
+                        isCritical ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        {isCritical ? '🚨 Critical Callback Scenario' : '✓ Normal Sign-off'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-2.5 rounded-lg border border-amber-200/80 font-mono text-[11px] text-slate-700">
+                      <div className="truncate flex-1">
+                        📲 SMS: &ldquo;Dear {activePatient.name.split(' ')[0]}, your lab report is ready. Access: http://localhost:5173/report/demo_{activePatient.id} (72h)&rdquo;
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `http://localhost:5173/report/demo_${activePatient.id}`;
+                          navigator.clipboard.writeText(url);
+                          setCopiedLinkId(activePatient.id);
+                          setTimeout(() => setCopiedLinkId(null), 3000);
+                        }}
+                        className="px-2.5 py-1 text-xs font-semibold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+                      >
+                        {copiedLinkId === activePatient.id ? '✓ Copied' : '🔗 Copy Link'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {!isOtpVerified ? (

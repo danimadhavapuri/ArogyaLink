@@ -54,12 +54,13 @@ export const isCriticalPanicValue = (parameter, result) => {
  * Evaluates parameter against normal reference range
  */
 export const evaluateParameter = (parameter, result, referenceRange) => {
-  const numResult = parseFloat(result);
+  const numResult = parseFloat(String(result).replace(/,/g, ''));
   if (isNaN(numResult)) {
     return { status: 'NORMAL', label: 'Normal' };
   }
 
-  const parts = referenceRange.split('-').map((s) => parseFloat(s.trim()));
+  const cleanRange = (referenceRange || '').replace(/,/g, '');
+  const parts = cleanRange.split('-').map((s) => parseFloat(s.trim()));
   const min = parts[0];
   const max = parts[1];
 

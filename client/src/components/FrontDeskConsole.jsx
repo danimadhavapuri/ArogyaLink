@@ -39,6 +39,7 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [showAllOrders, setShowAllOrders] = useState(false);
+  const [sortBy, setSortBy] = useState('PRIORITY');
 
   // Resend Link Modal State
   const [activeResendOrder, setActiveResendOrder] = useState(null);
@@ -178,36 +179,66 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
     setTimeout(() => setImportMessage(null), 5000);
   };
 
-  // Filter orders by Patient Name, Order ID, Registered Mobile Number, Test Parameter, Doctor
+  // Deduplicate orders by orderId so each patient record appears exactly once
+  const uniqueOrders = Array.from(new Map(orders.map(o => [o.orderId || o.id, o])).values());
+
+  // Filter and sort orders
   const isSearching = searchQuery.trim().length > 0;
+  const isFilterActive = statusFilter !== 'ALL';
 
-  const filteredOrders = orders.filter((o) => {
-    // Only display matching records after searching (or when explicitly choosing to view all)
-    if (!isSearching && !showAllOrders) return false;
+  const filteredOrders = uniqueOrders
+    .filter((o) => {
+      // Only hide if unsearched, not showing all, and filter is ALL
+      if (!isSearching && !showAllOrders && !isFilterActive) return false;
 
-    const q = searchQuery.toLowerCase().trim();
-    const cleanDigits = q.replace(/[^0-9]/g, '');
-    const patientPhoneDigits = (o.patientPhone || '').replace(/[^0-9]/g, '');
+      const q = searchQuery.toLowerCase().trim();
+      const cleanDigits = q.replace(/[^0-9]/g, '');
+      const patientPhoneDigits = (o.patientPhone || '').replace(/[^0-9]/g, '');
 
-    const matchesName = (o.patientName || '').toLowerCase().includes(q);
-    const matchesId = (o.orderId || '').toLowerCase().includes(q);
-    const matchesPhone = cleanDigits.length >= 3 && patientPhoneDigits.includes(cleanDigits);
-    const matchesParam = 
-      (o.parameter || '').toLowerCase().includes(q) ||
-      (o.tests && Array.isArray(o.tests) && o.tests.some(t => (t.parameter || t.name || '').toLowerCase().includes(q)));
-    const matchesDoc = (o.referringDoctor || '').toLowerCase().includes(q);
+      const matchesName = (o.patientName || '').toLowerCase().includes(q);
+      const matchesId = (o.orderId || '').toLowerCase().includes(q);
+      const matchesPhone = cleanDigits.length >= 3 && patientPhoneDigits.includes(cleanDigits);
+      const matchesParam = 
+        (o.parameter || '').toLowerCase().includes(q) ||
+        (o.tests && Array.isArray(o.tests) && o.tests.some(t => (t.parameter || t.name || '').toLowerCase().includes(q)));
+      const matchesDoc = (o.referringDoctor || '').toLowerCase().includes(q);
 
-    const matchesSearch = !q || matchesName || matchesId || matchesPhone || matchesParam || matchesDoc;
+      const matchesSearch = !q || matchesName || matchesId || matchesPhone || matchesParam || matchesDoc;
 
-    const matchesStatus =
-      statusFilter === 'ALL'
-        ? true
-        : statusFilter === 'CRITICAL'
-        ? o.isCritical || (o.status && o.status.includes('critical'))
-        : o.status === statusFilter;
+      const isCritical = o.isCritical || (o.status && o.status.toLowerCase().includes('critical'));
+      const isReady = !isCritical && (o.status && o.status.toLowerCase().startsWith('ready'));
+      const isProcessing = (o.status && o.status.toLowerCase().includes('process'));
 
-    return matchesSearch && matchesStatus;
-  });
+      const matchesStatus =
+        statusFilter === 'ALL'
+          ? true
+          : statusFilter === 'CRITICAL'
+          ? isCritical
+          : statusFilter === 'Ready'
+          ? isReady
+          : statusFilter === 'Processing'
+          ? isProcessing
+          : o.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'NAME') {
+        return (a.patientName || '').localeCompare(b.patientName || '');
+      }
+      if (sortBy === 'ORDER_ID') {
+        return (b.orderId || '').localeCompare(a.orderId || '');
+      }
+      // Default: 'PRIORITY' - Critical panic orders first, then Ready, then Processing
+      const getPriorityRank = (item) => {
+        if (item.isCritical || (item.status && item.status.toLowerCase().includes('critical'))) return 1;
+        if (item.status && item.status.toLowerCase().startsWith('ready')) return 2;
+        return 3;
+      };
+      const rankDiff = getPriorityRank(a) - getPriorityRank(b);
+      if (rankDiff !== 0) return rankDiff;
+      return (b.orderId || '').localeCompare(a.orderId || '');
+    });
 
   const pendingCallbacksCount = callbacks.filter(c => c.status === 'Pending').length;
 
@@ -374,20 +405,59 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
                 )}
               </div>
 
-              <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
-                {['ALL', 'Ready', 'Processing', 'CRITICAL'].map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                      statusFilter === st
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Status Filter Buttons with Live Counts */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                  {['ALL', 'Ready', 'Processing', 'CRITICAL'].map((st) => {
+                    const count = st === 'ALL'
+                      ? uniqueOrders.length
+                      : st === 'CRITICAL'
+                      ? uniqueOrders.filter(o => o.isCritical || (o.status && o.status.toLowerCase().includes('critical'))).length
+                      : st === 'Ready'
+                      ? uniqueOrders.filter(o => !o.isCritical && (o.status && o.status.toLowerCase().startsWith('ready'))).length
+                      : uniqueOrders.filter(o => (o.status && o.status.toLowerCase().includes('process'))).length;
+
+                    return (
+                      <button
+                        key={st}
+                        onClick={() => {
+                          setStatusFilter(st);
+                          if (st !== 'ALL') setShowAllOrders(true);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 text-[11px] ${
+                          statusFilter === st
+                            ? 'bg-white text-slate-900 shadow-xs font-bold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span>{st === 'CRITICAL' ? '🚨 Critical' : st}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                          st === 'CRITICAL' && count > 0 
+                            ? 'bg-rose-100 text-rose-800' 
+                            : statusFilter === st 
+                            ? 'bg-slate-200 text-slate-800' 
+                            : 'bg-slate-200/60 text-slate-500'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sort Option Control */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                  <span className="text-[11px] text-slate-400 pl-1 font-semibold">Sort:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="bg-white border border-slate-200 text-slate-800 text-[11px] font-semibold rounded-lg px-2 py-1 outline-none cursor-pointer"
                   >
-                    {st === 'CRITICAL' ? '🚨 Critical' : st}
-                  </button>
-                ))}
+                    <option value="PRIORITY">Priority (🚨 Panic First)</option>
+                    <option value="NAME">Patient Name (A-Z)</option>
+                    <option value="ORDER_ID">Order ID</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -432,8 +502,8 @@ export default function FrontDeskConsole({ onSelectOrderForPatientView, currentU
             </div>
           </div>
 
-          {/* INITIAL SCREEN: When Front-Desk has not performed a search */}
-          {!isSearching && !showAllOrders ? (
+          {/* INITIAL SCREEN: When Front-Desk has not performed a search and filter is ALL */}
+          {!isSearching && !showAllOrders && statusFilter === 'ALL' ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs">
               <div className="w-16 h-16 rounded-3xl bg-teal-50 text-teal-600 mx-auto flex items-center justify-center mb-4 border border-teal-100">
                 <Search className="w-8 h-8" />
