@@ -75,7 +75,7 @@ export default function App() {
         setIsOtpVerified(false);
         setActiveOrder(null);
 
-        fetch(`http://localhost:5000/api/reports/verify-token/${token}`)
+        fetch(`/api/reports/verify-token/${token}`)
           .then(res => res.json())
           .then(data => {
             if (data.success) {
@@ -181,8 +181,8 @@ export default function App() {
 
     try {
       const endpoint = docIsSignUp
-        ? 'http://localhost:5000/api/auth/register'
-        : 'http://localhost:5000/api/auth/login';
+        ? '/api/auth/register'
+        : '/api/auth/login';
 
       const payload = docIsSignUp
         ? {
@@ -230,8 +230,8 @@ export default function App() {
 
     try {
       const endpoint = staffIsSignUp
-        ? 'http://localhost:5000/api/auth/register'
-        : 'http://localhost:5000/api/auth/login';
+        ? '/api/auth/register'
+        : '/api/auth/login';
 
       const payload = staffIsSignUp
         ? {

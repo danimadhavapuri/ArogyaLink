@@ -64,8 +64,8 @@ export default function AuthModal({ isOpen, onClose, initialRole = 'doctor', onL
 
     try {
       const endpoint = isSignUp 
-        ? 'http://localhost:5000/api/auth/register' 
-        : 'http://localhost:5000/api/auth/login';
+        ? '/api/auth/register' 
+        : '/api/auth/login';
 
       const payload = isSignUp
         ? {
