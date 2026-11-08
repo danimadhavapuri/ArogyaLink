@@ -3,7 +3,8 @@
 **Diagnostic Lab Automated Report-Delivery Portal for Patients and Referring Doctors**  
 *Coastal Andhra Pradesh Diagnostic Network • Vijayawada (6 Labs & 38 Collection Centres)*  
 *Compliance: Digital Personal Data Protection (DPDP) Act 2023 | NABL Clinical Guidelines*  
-*Public Repository: [https://github.com/danimadhavapuri/ArogyaLink.git](https://github.com/danimadhavapuri/ArogyaLink.git)*
+*Public Repository: [https://github.com/danimadhavapuri/ArogyaLink.git](https://github.com/danimadhavapuri/ArogyaLink.git)*  
+*Live Application URL: [https://arogyalink-sc22.onrender.com](https://arogyalink-sc22.onrender.com)*
 
 ---
 

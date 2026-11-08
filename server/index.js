@@ -549,6 +549,16 @@ app.get('/api/auth/doctors', (req, res) => {
   res.json({ success: true, doctors: doctorsWithStats });
 });
 
+// Serve frontend static files in production
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 ArogyaLink Server running on http://localhost:${PORT}`);

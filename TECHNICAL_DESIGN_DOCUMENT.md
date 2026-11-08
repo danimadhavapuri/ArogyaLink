@@ -2,7 +2,8 @@
 **Diagnostic Lab Automated Report-Delivery Portal for Patients and Referring Doctors**  
 *Company A • Coastal Andhra Pradesh Diagnostic Chain (Vijayawada • 6 Central Labs & 38 Collection Centres)*  
 *Author: Dani Madhavapuri (Software Engineering Intern Take-Home Task, Isocode Labs)*  
-*Public GitHub Repository: [https://github.com/danimadhavapuri/ArogyaLink.git](https://github.com/danimadhavapuri/ArogyaLink.git)*
+*Public GitHub Repository: [https://github.com/danimadhavapuri/ArogyaLink.git](https://github.com/danimadhavapuri/ArogyaLink.git)*  
+*Live Application URL: [https://arogyalink-sc22.onrender.com](https://arogyalink-sc22.onrender.com)*
 
 ---
 
@@ -232,4 +233,5 @@ node --test tests/api.test.js
 
 ArogyaLink successfully transforms Company A's laboratory network into a modern, compliant, and clinically responsible diagnostic delivery ecosystem. By pairing **statutory DPDP 2023 security** with **physician-guided AI summaries** and **uncompromising clinical safety intercepts**, the platform eliminates ₹70.56 Lakh in annual operational waste while protecting patient privacy across Coastal Andhra Pradesh.
 
-*Public GitHub Repository: [https://github.com/danimadhavapuri/ArogyaLink.git](https://github.com/danimadhavapuri/ArogyaLink.git)*
+*Public GitHub Repository: [https://github.com/danimadhavapuri/ArogyaLink.git](https://github.com/danimadhavapuri/ArogyaLink.git)*  
+*Live Application URL: [https://arogyalink-sc22.onrender.com](https://arogyalink-sc22.onrender.com)*
