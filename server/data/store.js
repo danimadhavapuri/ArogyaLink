@@ -133,7 +133,15 @@ export function getOrders() {
 }
 
 export function getOrderById(id) {
-  return orders.find(o => o.id === id || o.orderId === id);
+  if (!id) return null;
+  const cleanId = String(id).replace(/^demo_/i, '').trim();
+  return orders.find(o => 
+    o.id === id || 
+    o.orderId === id || 
+    o.id === cleanId || 
+    o.orderId === cleanId ||
+    (o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase())
+  );
 }
 
 export function getOrdersByDoctor(doctorQuery) {

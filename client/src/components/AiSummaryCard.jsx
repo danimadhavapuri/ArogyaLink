@@ -26,24 +26,31 @@ export default function AiSummaryCard({ order }) {
   const [question, setQuestion] = useState('');
   const [chatAnswer, setChatAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
+  const [doubtError, setDoubtError] = useState(null);
 
   // Flagging Modal State
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagReason, setFlagReason] = useState('Unclear medical explanation');
   const [flagComment, setFlagComment] = useState('');
   const [flagSubmitted, setFlagSubmitted] = useState(false);
+  const [submittingFlag, setSubmittingFlag] = useState(false);
+  const [flagError, setFlagError] = useState(null);
+
+  // Helper to get sanitized order ID
+  const getCleanOrderId = () => {
+    const raw = order?.orderId || order?.id || 'ORD-71204';
+    return String(raw).replace(/^demo_/i, '').trim();
+  };
 
   // Fetch summary and languages on mount
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-                // Fetch core summary
-        const oid = order?.orderId || order?.id;
+        const oid = getCleanOrderId();
         const sumRes = await fetch(`/api/reports/${oid}/summary`);
         const sumJson = await sumRes.json();
         if (sumJson.success) {
-          // Accept both sumJson.data and sumJson.summary
           const payload = sumJson.data || sumJson;
           setSummaryData(payload);
         }
@@ -52,7 +59,7 @@ export default function AiSummaryCard({ order }) {
         const langRes = await fetch('/api/languages');
         const langJson = await langRes.json();
         if (langJson.success) {
-          setAllLanguages(langJson.languages);
+          setAllLanguages(langJson.languages || []);
         }
       } catch (err) {
         console.error('Failed to load summary:', err);
@@ -73,14 +80,14 @@ export default function AiSummaryCard({ order }) {
     if (langCode !== 'en' && langCode !== 'te' && langCode !== 'hi') {
       setTranslating(true);
       try {
-        const oid = order?.orderId || order?.id;
+        const oid = getCleanOrderId();
         const res = await fetch(`/api/reports/${oid}/translate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ targetLanguage: langCode })
         });
         const json = await res.json();
-        if (json.success) {
+        if (json.success && json.data) {
           setTranslatedText(json.data.translatedText);
         }
       } catch (err) {
@@ -92,27 +99,36 @@ export default function AiSummaryCard({ order }) {
   };
 
   // Handle patient asking a question
-  const handleAskDoubt = async (e) => {
-    e.preventDefault();
-    if (!question.trim()) return;
+  const handleAskDoubt = async (e, customQuestion) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const queryToAsk = (customQuestion || question || '').trim();
+    if (!queryToAsk) return;
+
+    if (customQuestion) {
+      setQuestion(customQuestion);
+    }
 
     setAsking(true);
+    setDoubtError(null);
     try {
-      const oid = order?.orderId || order?.id;
+      const oid = getCleanOrderId();
       const res = await fetch(`/api/reports/${oid}/ask-ai`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question,
+          question: queryToAsk,
           language: selectedLang
         })
       });
       const json = await res.json();
-      if (json.success) {
+      if (res.ok && json.success && json.data) {
         setChatAnswer(json.data.answer);
+      } else {
+        setDoubtError(json.message || 'Unable to fetch response. Please try again.');
       }
     } catch (err) {
       console.error('Doubt request failed:', err);
+      setDoubtError('Connection error. Please try again.');
     } finally {
       setAsking(false);
     }
@@ -120,27 +136,35 @@ export default function AiSummaryCard({ order }) {
 
   // Handle patient flagging summary
   const handleFlagSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    setSubmittingFlag(true);
+    setFlagError(null);
     try {
-      const oid = order?.orderId || order?.id;
+      const oid = getCleanOrderId();
       const res = await fetch(`/api/reports/${oid}/flag`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reason: flagReason,
-          patientComment: flagComment
+          patientComment: flagComment || 'Patient requested review'
         })
       });
       const json = await res.json();
-      if (json.success) {
+      if (res.ok && json.success) {
         setFlagSubmitted(true);
         setTimeout(() => {
           setShowFlagModal(false);
           setFlagSubmitted(false);
-        }, 2500);
+          setFlagComment('');
+        }, 2200);
+      } else {
+        setFlagError(json.message || 'Failed to submit flag. Please try again.');
       }
     } catch (err) {
       console.error('Flag submission failed:', err);
+      setFlagError('Connection error. Please try again.');
+    } finally {
+      setSubmittingFlag(false);
     }
   };
 
@@ -154,7 +178,7 @@ export default function AiSummaryCard({ order }) {
     );
   }
 
-    // Get current active explanation text
+  // Get current active explanation text
   let currentSummaryText = '';
   if (translatedText) {
     currentSummaryText = translatedText;
@@ -267,7 +291,12 @@ export default function AiSummaryCard({ order }) {
                 Verified Clinical Guidance • Disclaimers Apply
               </span>
               <button
-                onClick={() => setShowFlagModal(true)}
+                type="button"
+                onClick={() => {
+                  setFlagError(null);
+                  setFlagSubmitted(false);
+                  setShowFlagModal(true);
+                }}
                 className="text-slate-500 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <Flag className="w-3 h-3" />
@@ -280,40 +309,80 @@ export default function AiSummaryCard({ order }) {
 
       {/* In-App Patient Doubt Chat */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-900 mb-2">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-900 mb-1.5">
           <MessageSquare className="w-4 h-4 text-teal-600" />
           <span>Have a question about this report? Ask our Clinical Assistant</span>
         </div>
-        <p className="text-xs text-slate-500 mb-3">
-          Ask in English, Telugu, or Tenglish (e.g. <em>"What food should I eat?"</em> or <em>"Is this dangerous?"</em>)
+        <p className="text-xs text-slate-500 mb-2.5">
+          Ask in English, Telugu, or Tenglish:
         </p>
 
-        <form onSubmit={handleAskDoubt} className="flex gap-2">
+        {/* Quick Question Pills */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <button
+            type="button"
+            onClick={() => handleAskDoubt(null, 'What food should I eat?')}
+            className="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+          >
+            🥗 What food should I eat?
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAskDoubt(null, 'Is this dangerous?')}
+            className="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+          >
+            ⚠️ Is this dangerous?
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAskDoubt(null, 'నాకు అర్థం కాలేదు ఇప్పుడు ఏం చేయాలి?')}
+            className="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+          >
+            ❓ ఇప్పుడు ఏం చేయాలి?
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAskDoubt(null, 'How much does treatment cost?')}
+            className="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+          >
+            💰 Treatment cost
+          </button>
+        </div>
+
+        <form onSubmit={(e) => handleAskDoubt(e)} className="flex gap-2">
           <input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Type your question here..."
+            placeholder="Type your question in English, Telugu, or Tenglish..."
             className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:bg-white focus:border-teal-500 outline-none"
           />
           <button
             type="submit"
             disabled={asking || !question.trim()}
-            className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
           >
             {asking ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>Ask</span>
+            <span>{asking ? 'Thinking...' : 'Ask'}</span>
           </button>
         </form>
 
+        {/* Error Alert */}
+        {doubtError && (
+          <div className="mt-3 bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-800 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>{doubtError}</span>
+          </div>
+        )}
+
         {/* Instant In-App Answer Box */}
         {chatAnswer && (
-          <div className="mt-3.5 bg-teal-50/70 border border-teal-200 rounded-xl p-3.5 text-xs text-slate-800 space-y-1">
-            <span className="font-bold text-teal-800 flex items-center gap-1">
-              <Check className="w-3.5 h-3.5 text-teal-600" />
-              Assistant Response:
+          <div className="mt-3.5 bg-teal-50/80 border border-teal-200 rounded-xl p-3.5 text-xs text-slate-800 space-y-1.5 shadow-2xs">
+            <span className="font-bold text-teal-900 flex items-center gap-1.5">
+              <Check className="w-4 h-4 text-teal-600" />
+              ArogyaLink Clinical Assistant Response:
             </span>
-            <p className="leading-relaxed">{chatAnswer}</p>
+            <p className="leading-relaxed whitespace-pre-line text-slate-700">{chatAnswer}</p>
           </div>
         )}
       </div>
@@ -329,6 +398,13 @@ export default function AiSummaryCard({ order }) {
             <p className="text-xs text-slate-500 mt-1 mb-4">
               Our Chief Pathologist audits 50 summaries every week. Tell us what was confusing or incorrect.
             </p>
+
+            {flagError && (
+              <div className="mb-3 bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-xs text-rose-800 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{flagError}</span>
+              </div>
+            )}
 
             {flagSubmitted ? (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-center text-xs space-y-1">
@@ -366,16 +442,19 @@ export default function AiSummaryCard({ order }) {
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
+                    disabled={submittingFlag}
                     onClick={() => setShowFlagModal(false)}
-                    className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 rounded-lg"
+                    className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 rounded-lg cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                    disabled={submittingFlag}
+                    className="bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    Submit Flag
+                    {submittingFlag ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
+                    <span>{submittingFlag ? 'Submitting...' : 'Submit Flag'}</span>
                   </button>
                 </div>
               </form>

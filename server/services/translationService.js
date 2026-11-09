@@ -315,11 +315,28 @@ export const translateSummary = async (order, targetLanguage = 'tenglish') => {
 export const resolvePatientDoubt = async (order, question, language = 'tenglish') => {
   const q = question.toLowerCase();
   const { parameter, result, unit, referringDoctor, patientName } = order;
+  const docName = (referringDoctor || 'Attending Physician').replace(/^Dr\.?\s*/i, '');
+  const doctorDisplay = `Dr. ${docName}`;
 
   let answer = '';
 
+  // 0. Confusion & "What should I do now?" queries ("em cheyaali", "em cheyyali", "ardham", "what should i do", "what to do", "confused", "help")
+  if (q.includes('ardham') || q.includes('cheyaali') || q.includes('cheyyali') || q.includes('what should i do') || q.includes('what to do') || q.includes('confus') || q.includes('help')) {
+    if (language === 'te' || q.includes('naaku') || q.includes('ardham') || q.includes('cheyaali') || q.includes('cheyyali')) {
+      answer = `కంగారు పడకండి (Do not worry). మీ రిపోర్ట్ వివరాలు చాలా స్పష్టంగా ఉన్నాయి:
+1. మీ ${parameter} ఫలితం ${result} ${unit} (సాధారణ స్థాయి: ${order.referenceRange || '12.0 - 15.5'} ${unit}). ఇది స్వల్పంగా తేడాగా ఉంది, ఇది సాధారణంగా జరిగేదే మరియు సులభంగా నయమవుతుంది.
+2. ఆహారంలో పాలకూర, ఖర్జూరం, దానిమ్మ, బీట్‌రూట్ వంటి సహజ పోషకాలను తీసుకోండి.
+3. మీ పూర్తి చికిత్స లేదా ఐరన్ సప్లిమెంట్ల కొరకు మీ డాక్టర్ ${doctorDisplay} గారిని సంప్రదించండి. డాక్టర్ గారి పర్యవేక్షణలో ఇది త్వరగా సాధారణ స్థాయికి వస్తుంది.`;
+    } else {
+      answer = `Please don't worry! Here is exactly what you should do step-by-step:
+1. Understand your result: Your ${parameter} is ${result} ${unit} (Reference Range: ${order.referenceRange} ${unit}). It indicates a mild deviation that is very common and manageable.
+2. Immediate steps: Focus on recommended dietary nutrition (iron-rich foods like spinach, dates, pomegranate) and stay well-hydrated.
+3. Doctor consultation: Share this digital report with ${doctorDisplay} during your next scheduled appointment. Any prescription adjustments will be advised by your doctor.`;
+    }
+  }
+
   // 1. Cost & Expenses Queries ("how much money", "cost", "kharch", "fees")
-  if (q.includes('money') || q.includes('cost') || q.includes('price') || q.includes('spend') || q.includes('kharch') || q.includes('dabbulu')) {
+  else if (q.includes('money') || q.includes('cost') || q.includes('price') || q.includes('spend') || q.includes('kharch') || q.includes('dabbulu')) {
     if (parameter === 'Haemoglobin') {
       answer = `To improve a mild low Haemoglobin (${result} ${unit}), the cost is typically very affordable:
 • Dietary items (Spinach/Palakura, Dates/Kharjooram, Lentils, Beetroot): ₹100–₹200 per week.

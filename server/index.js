@@ -293,45 +293,55 @@ app.post('/api/reports/:id/translate', async (req, res) => {
 
 // 14. In-App Patient Doubt Resolver
 app.post('/api/reports/:id/ask-ai', async (req, res) => {
-  const order = getOrderById(req.params.id);
-  if (!order) {
-    return res.status(404).json({ success: false, message: 'Order not found' });
-  }
+  try {
+    const order = getOrderById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
 
-  const { question, language } = req.body;
-  if (!question || typeof question !== 'string') {
-    return res.status(400).json({ success: false, message: 'Please provide a question' });
-  }
+    const { question, language } = req.body;
+    if (!question || typeof question !== 'string') {
+      return res.status(400).json({ success: false, message: 'Please provide a question' });
+    }
 
-  const response = await resolvePatientDoubt(order, question, language || 'tenglish');
-  res.json({
-    success: true,
-    data: response
-  });
+    const response = await resolvePatientDoubt(order, question, language || 'tenglish');
+    res.json({
+      success: true,
+      data: response
+    });
+  } catch (err) {
+    console.error('Error in ask-ai:', err);
+    res.status(500).json({ success: false, message: 'Failed to answer question: ' + err.message });
+  }
 });
 
 // 15. Patient Flags a Summary (For Pathologist Quality Audit)
 app.post('/api/reports/:id/flag', (req, res) => {
-  const order = getOrderById(req.params.id);
-  if (!order) {
-    return res.status(404).json({ success: false, message: 'Order not found' });
+  try {
+    const order = getOrderById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const { reason, patientComment } = req.body;
+    const flag = addFlaggedSummary({
+      orderId: order.orderId,
+      patientName: order.patientName,
+      parameter: order.parameter,
+      result: `${order.result} ${order.unit}`,
+      reason: reason || 'Unclear medical explanation',
+      patientComment: patientComment || 'Patient requested clinical review'
+    });
+
+    res.json({
+      success: true,
+      message: 'Summary flagged for Pathologist weekly quality review.',
+      data: flag
+    });
+  } catch (err) {
+    console.error('Error in report flag:', err);
+    res.status(500).json({ success: false, message: 'Failed to record flag: ' + err.message });
   }
-
-  const { reason, patientComment } = req.body;
-  const flag = addFlaggedSummary({
-    orderId: order.orderId,
-    patientName: order.patientName,
-    parameter: order.parameter,
-    result: `${order.result} ${order.unit}`,
-    reason: reason || 'Unclear medical explanation',
-    patientComment: patientComment || 'Patient requested clinical review'
-  });
-
-  res.json({
-    success: true,
-    message: 'Summary flagged for Pathologist weekly quality review.',
-    data: flag
-  });
 });
 
 // 16. Get Pathologist Weekly Review Queue
