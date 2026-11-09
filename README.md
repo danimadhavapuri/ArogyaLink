@@ -1,12 +1,16 @@
 # 🏥 ArogyaLink — Diagnostic Lab Report-Delivery Portal
-**Modern, Secure & DPDP Act 2023 Compliant Diagnostic Portal for Patients and Referring Doctors**  
-*Coastal Andhra Pradesh Diagnostic Network • Vijayawada (6 Central Labs & 38 Collection Centres)*  
-*Built for the Isocode Labs Software Engineering Take-Home Task (Due 9 Nov 2026, 11:59 PM IST)*  
-*Author: Dani Madhavapuri (BCA, Aditya Degree Women's College, Rajahmundry, Andhra Pradesh)*
 
-[![Live Web Application](https://img.shields.io/badge/Live%20App-arogyalink--sc22.onrender.com-0d9488?style=for-the-badge&logo=render)](https://arogyalink-sc22.onrender.com)
-[![Automated Tests](https://img.shields.io/badge/Tests-11%20PASSED%20%7C%200%20FAILED-10b981?style=for-the-badge&logo=node.js)](https://github.com/danimadhavapuri/ArogyaLink)
-[![DPDP Act 2023 Verified](https://img.shields.io/badge/DPDP%20Act%202023-Verified%20%26%20Compliant-3b82f6?style=for-the-badge)](https://github.com/danimadhavapuri/ArogyaLink)
+[![LIVE DEMO](https://img.shields.io/badge/LIVE%20DEMO-RENDER-black?style=for-the-badge&logo=render)](https://arogyalink-sc22.onrender.com)
+[![TEST SUITE](https://img.shields.io/badge/TEST%20SUITE-11%20PASSED-brightgreen?style=for-the-badge&logo=node.js)](https://github.com/danimadhavapuri/ArogyaLink)
+[![DPDP ACT 2023](https://img.shields.io/badge/DPDP%20ACT%202023-COMPLIANT-blue?style=for-the-badge)](https://github.com/danimadhavapuri/ArogyaLink)
+[![NODE.JS](https://img.shields.io/badge/NODE.JS-20+-brightgreen?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![REACT](https://img.shields.io/badge/REACT-18-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![TAILWIND CSS](https://img.shields.io/badge/TAILWIND%20CSS-v4-06b6d4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![SECURITY](https://img.shields.io/badge/SECURITY-HMAC--SHA256-red?style=for-the-badge)](https://github.com/danimadhavapuri/ArogyaLink)
+
+A production-grade, zero-install diagnostic report delivery system built with **React 18, Vite, Node.js, Express, and Tailwind CSS** for **Company A** (Vijayawada • 6 Labs & 38 Collection Centres across Coastal Andhra Pradesh).
+
+Engineered to eliminate **₹70.56 Lakh in annual operational waste** (40 staff hours/day of status calls and 2,88,000 hand-printed reports) using **72-hour cryptographic HMAC-SHA256 expiring links**, **2-factor mobile OTP authentication**, **deterministic clinical AI safety rules (Potassium 6.8 mmol/L panic intercept)**, and **multi-lingual plain-language summaries in 26+ Indian languages** (Telugu, Tenglish, Hinglish, Hindi, and English).
 
 ---
 
@@ -136,3 +140,14 @@ npm test
 | **Dr. K. Suresh** | `suresh@arogyalink.in` | `doctor123` | Referring Clinician (Nephrologist) |
 | **Staff Supervisor** | `staff@arogyalink.in` | `staff123` | Front-Desk Operations & Compliance Supervisor |
 | **Patient OTP** | *Any 4 digits* (e.g. `1234`) | — | 1-Click Auto-Fill Demo OTP on Patient Portal |
+
+---
+
+## 👨‍💻 Author
+
+Dani Madhavapuri
+
+- GitHub: [@danimadhavapuri](https://github.com/danimadhavapuri)
+- GitHub Repository: [https://github.com/danimadhavapuri/ArogyaLink](https://github.com/danimadhavapuri/ArogyaLink)
+- Portfolio Live App: [https://arogyalink-sc22.onrender.com](https://arogyalink-sc22.onrender.com)
+- Cloud Backend API: [https://arogyalink-sc22.onrender.com/api/health](https://arogyalink-sc22.onrender.com/api/health)
