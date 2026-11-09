@@ -2,304 +2,302 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ArogyaLink — Technical Design Document (TDD)</title>
+  <title></title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 14mm 16mm 14mm 16mm;
+    }
+
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.65;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.6;
       color: #1e293b;
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 0 32px;
-      background-color: #ffffff;
+      background: #ffffff;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 20px;
     }
-    
-    .header-banner {
-      border-bottom: 3px solid #0d9488;
-      padding-bottom: 20px;
-      margin-bottom: 24px;
+
+    /* Print Specific Rules */
+    @media print {
+      body {
+        max-width: 100%;
+        padding: 0;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        color: #0f172a;
+      }
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+      h2 {
+        page-break-after: avoid;
+        break-after: avoid;
+        margin-top: 18pt;
+      }
+      h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+        margin-top: 12pt;
+      }
+      pre, table, .meta-card, .alert-box, .callout-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
     }
-    
+
+    /* Typography */
     h1 {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
       color: #0f172a;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      margin-bottom: 4px;
     }
-    
-    .subtitle {
-      font-size: 15px;
-      color: #0f766e;
+
+    .doc-subtitle {
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 16px;
-    }
-    
-    .meta-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 18px 22px;
-      margin-bottom: 28px;
-      font-size: 13.5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    
-    .meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px 24px;
-    }
-    
-    .meta-item strong {
-      color: #0f172a;
-      font-weight: 600;
-    }
-    
-    .meta-item a {
       color: #0d9488;
-      text-decoration: none;
-      font-weight: 500;
+      margin-bottom: 18px;
     }
-    
-    .meta-item a:hover {
-      text-decoration: underline;
-    }
-    
+
     h2 {
-      font-size: 18px;
+      font-size: 16.5px;
       font-weight: 700;
       color: #0f766e;
       border-bottom: 1.5px solid #e2e8f0;
-      padding-bottom: 8px;
-      margin-top: 36px;
-      margin-bottom: 14px;
-      letter-spacing: -0.01em;
+      padding-bottom: 6px;
+      margin-top: 26px;
+      margin-bottom: 12px;
+      letter-spacing: -0.015em;
     }
-    
+
     h3 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       color: #334155;
-      margin-top: 20px;
-      margin-bottom: 8px;
-    }
-    
-    p, li {
-      font-size: 13.5px;
-      color: #334155;
-      margin-bottom: 10px;
-    }
-    
-    ul, ol {
-      padding-left: 22px;
-      margin-bottom: 14px;
-    }
-    
-    li {
+      margin-top: 16px;
       margin-bottom: 6px;
     }
-    
-    code {
-      background: #f1f5f9;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12.5px;
-      color: #0f766e;
+
+    p {
+      margin-bottom: 10px;
+      color: #334155;
     }
-    
+
+    ul, ol {
+      margin-bottom: 12px;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 5px;
+      color: #334155;
+    }
+
+    strong {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      background: #f1f5f9;
+      color: #0f766e;
+      padding: 1.5px 5px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
     pre {
       background: #0f172a;
       color: #f8fafc;
-      padding: 16px 20px;
-      border-radius: 8px;
-      overflow-x: auto;
+      padding: 14px 16px;
+      border-radius: 6px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px;
-      line-height: 1.5;
-      margin: 14px 0 20px 0;
+      font-size: 11px;
+      line-height: 1.45;
+      overflow-x: auto;
+      margin: 12px 0 16px 0;
+      border: 1px solid #1e293b;
     }
-    
+
     pre code {
       background: none;
       color: inherit;
       padding: 0;
+      border: none;
       font-size: inherit;
     }
-    
+
+    /* Meta Information Card */
+    .meta-card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 20px;
+      font-size: 12.5px;
+    }
+
+    .meta-row span.label {
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .meta-row span.val {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    .meta-row a {
+      color: #0d9488;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .meta-row a:hover {
+      text-decoration: underline;
+    }
+
+    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 18px 0 24px 0;
-      font-size: 12.5px;
+      margin: 14px 0 18px 0;
+      font-size: 12px;
     }
-    
+
     th, td {
       border: 1px solid #cbd5e1;
-      padding: 9px 12px;
+      padding: 8px 10px;
       text-align: left;
       vertical-align: top;
     }
-    
+
     th {
       background: #f1f5f9;
       font-weight: 600;
       color: #0f172a;
     }
-    
+
     tr:nth-child(even) {
       background: #f8fafc;
     }
-    
-    .badge {
-      display: inline-block;
-      background: #ccfbf1;
-      color: #0f766e;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      font-size: 11px;
-    }
-    
-    .emergency {
+
+    /* Callouts & Alert Boxes */
+    .alert-box {
       background: #fff1f2;
       border-left: 4px solid #e11d48;
       border-radius: 6px;
-      padding: 14px 18px;
-      margin: 18px 0;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 12.5px;
+    }
+
+    .alert-box strong.title {
+      color: #9f1239;
+      display: block;
+      margin-bottom: 4px;
       font-size: 13px;
     }
-    
-    .emergency strong {
-      color: #9f1239;
-    }
-    
-    .callout {
+
+    .callout-card {
       background: #f0fdf4;
       border-left: 4px solid #10b981;
       border-radius: 6px;
-      padding: 14px 18px;
-      margin: 18px 0;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 12.5px;
+    }
+
+    .callout-card strong.title {
+      color: #065f46;
+      display: block;
+      margin-bottom: 4px;
       font-size: 13px;
     }
 
-    @page {
-      size: A4;
-      margin: 14mm 16mm;
-    }
-
-    @media print {
-      body {
-        max-width: 100%;
-        margin: 0;
-        padding: 0;
-        font-size: 11pt;
-        line-height: 1.55;
-        color: #0f172a;
-      }
-      .header-banner {
-        border-bottom: 2.5px solid #0d9488;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
-      }
-      h1 { font-size: 20pt; }
-      h2 { 
-        font-size: 13.5pt; 
-        margin-top: 18pt; 
-        margin-bottom: 8pt;
-        page-break-after: avoid; 
-        break-after: avoid;
-      }
-      h3 { 
-        font-size: 11.5pt; 
-        margin-top: 12pt; 
-        page-break-after: avoid; 
-        break-after: avoid;
-      }
-      p, li { 
-        font-size: 9.8pt; 
-        line-height: 1.5;
-        margin-bottom: 6pt;
-      }
-      pre { 
-        font-size: 8.5pt; 
-        padding: 10px 14px; 
-        margin: 10pt 0;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        border: 1px solid #cbd5e1;
-      }
-      table { 
-        font-size: 8.5pt; 
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin: 12pt 0;
-      }
-      th, td { 
-        padding: 6px 8px; 
-      }
-      .meta-box { 
-        padding: 10px 14px; 
-        margin-bottom: 14pt;
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-      .emergency, .callout { 
-        page-break-inside: avoid;
-        break-inside: avoid;
-        padding: 10px 14px;
-        margin: 12pt 0;
-      }
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      font-size: 10.5px;
+      font-weight: 600;
+      border-radius: 12px;
+      background: #ccfbf1;
+      color: #0f766e;
     }
   </style>
 </head>
 <body>
 
-  <div class="header-banner">
+  <!-- Document Header -->
+  <div style="border-bottom: 2.5px solid #0d9488; padding-bottom: 14px; margin-bottom: 16px;">
     <h1>🏥 ArogyaLink — Technical Design Document (TDD)</h1>
-    <div class="subtitle">Diagnostic Lab Automated Report-Delivery Portal for Patients and Referring Doctors</div>
+    <div class="doc-subtitle">Diagnostic Lab Automated Report-Delivery Portal for Patients and Referring Doctors</div>
   </div>
 
-  <div class="meta-box">
+  <!-- Meta Information Box -->
+  <div class="meta-card">
     <div class="meta-grid">
-      <div class="meta-item"><strong>Candidate Author:</strong> Dani Madhavapuri</div>
-      <div class="meta-item"><strong>Institution:</strong> BCA, Aditya Degree Women's College, Rajahmundry</div>
-      <div class="meta-item"><strong>Company / Role:</strong> Isocode Labs — Software Engineering Intern</div>
-      <div class="meta-item"><strong>Due Date:</strong> 9 Nov 2026, 11:59 PM IST</div>
-      <div class="meta-item"><strong>Client Context:</strong> Company A, Vijayawada (6 Labs & 38 Collection Centres)</div>
-      <div class="meta-item"><strong>Compliance Standard:</strong> DPDP Act 2023 | NABL Clinical Guidelines</div>
-      <div class="meta-item"><strong>Public GitHub Repo:</strong> <a href="https://github.com/danimadhavapuri/ArogyaLink.git">github.com/danimadhavapuri/ArogyaLink</a></div>
-      <div class="meta-item"><strong>Live Web Application:</strong> <a href="https://arogyalink-sc22.onrender.com">arogyalink-sc22.onrender.com</a></div>
+      <div class="meta-row"><span class="label">Candidate Author:</span> <span class="val">Dani Madhavapuri</span></div>
+      <div class="meta-row"><span class="label">Client & Location:</span> <span class="val">Company A, Vijayawada (Coastal AP)</span></div>
+      <div class="meta-row"><span class="label">Role & Company:</span> <span class="val">Software Engineering Intern, Isocode Labs</span></div>
+      <div class="meta-row"><span class="label">Network Scale:</span> <span class="val">6 Central Labs & 38 Collection Centres</span></div>
+      <div class="meta-row"><span class="label">Submission Due:</span> <span class="val">9 November 2026, 11:59 PM IST</span></div>
+      <div class="meta-row"><span class="label">Compliance:</span> <span class="val">DPDP Act 2023 | NABL Clinical Guidelines</span></div>
+      <div class="meta-row" style="grid-column: 1 / -1;"><span class="label">GitHub Repository:</span> <a href="https://github.com/danimadhavapuri/ArogyaLink.git" target="_blank">https://github.com/danimadhavapuri/ArogyaLink.git</a></div>
+      <div class="meta-row" style="grid-column: 1 / -1;"><span class="label">Live Web Application:</span> <a href="https://arogyalink-sc22.onrender.com" target="_blank">https://arogyalink-sc22.onrender.com</a></div>
     </div>
   </div>
 
+  <!-- Section 1 -->
   <h2>1. Executive Summary & Problem Context</h2>
-  <p>Company A operates a regional pathology chain spanning Vijayawada and Coastal Andhra Pradesh with 6 central diagnostic laboratories and 38 outpatient collection centres, employing 260 staff with ₹45–55 crore annual revenue. The existing workflow distributed patient diagnostic reports via unencrypted WhatsApp and SMS attachments from 9 shared phones, introducing severe clinical, operational, and regulatory risks:</p>
+  <p>Company A operates a regional pathology chain spanning Vijayawada and Coastal Andhra Pradesh with 6 central diagnostic laboratories, 38 outpatient collection centres, and 260 staff, generating ₹45–55 crore annual revenue. The legacy workflow distributed patient reports via manual WhatsApp and SMS attachments from 9 shared front-desk mobile phones. This practice created severe legal, clinical, and financial challenges:</p>
   <ul>
-    <li><strong>Regulatory Non-Compliance (DPDP Act 2023):</strong> Diagnostic reports containing sensitive personal data (SPD) remained permanently accessible in chat histories without encryption, audit trails, or expiring access controls.</li>
-    <li><strong>Clinical Safety Hazards:</strong> Patients receiving out-of-range or life-threatening panic values (e.g. Potassium 6.8 mmol/L) experienced panic or sought medical interpretations from unverified generative AI models without clinical oversight.</li>
-    <li><strong>Doctor Friction & Fragmented Portals:</strong> Referring physicians had no centralized, time-bounded view of their referred patients' diagnostics over the regulatory 90-day consultation window.</li>
-    <li><strong>Front-Desk Operational Overhead:</strong> Reception and dispatch staff spent 40 hours a day answering status calls, with about 15 reports a month sent to the wrong phone numbers.</li>
+    <li><strong>Regulatory Non-Compliance (DPDP Act 2023):</strong> Diagnostic reports containing sensitive personal data (SPD) remained permanently stored in unencrypted third-party chat logs without expiring access or audit trails.</li>
+    <li><strong>Clinical Safety Hazards:</strong> Patients receiving life-threatening panic values (e.g. Potassium 6.8 mmol/L) experienced panic or sought medical interpretations from unverified consumer AI tools without clinical triage.</li>
+    <li><strong>Clinician Fragmentation:</strong> Referring physicians had no consolidated, 90-day time-bounded portal to view their referred patients' diagnostics.</li>
+    <li><strong>Front-Desk Operational Waste:</strong> Staff expended 40 hours per day answering status phone calls, with approximately 15 reports per month misdirected to wrong numbers.</li>
   </ul>
-  <p><strong>ArogyaLink</strong> replaces this workflow with a secure, zero-install, mobile-first report delivery architecture combining <strong>72-hour signed expiring links</strong>, <strong>2-factor mobile OTP authentication</strong>, <strong>deterministic clinical AI plain-language summaries in 26+ Indian languages</strong>, an <strong>automated panic-value safety intercept</strong>, and a <strong>dedicated referring doctor 90-day portal</strong>.</p>
+  <p><strong>ArogyaLink</strong> replaces this fragile workflow with a zero-install, DPDP 2023-compliant architecture combining <strong>72-hour signed expiring links</strong>, <strong>2-factor mobile OTP authentication</strong>, <strong>deterministic clinical AI plain-language summaries in 26+ Indian languages</strong>, an <strong>automated panic-value safety intercept</strong>, and an <strong>isolated 90-day referring clinician workspace</strong>.</p>
 
-  <h2>2. Labeled Assumptions (Directly from Client Problem Statement)</h2>
-  <p>To maintain absolute fidelity to the brief, all architectural calculations are anchored on the client's verified operational parameters:</p>
+  <!-- Section 2 -->
+  <h2>2. Labeled Operational Assumptions</h2>
+  <p>All calculations and engineering choices are strictly anchored in the client's operational metrics:</p>
   <ul>
-    <li><strong>[ASSUMPTION-01] Patient Volume:</strong> The lab chain processes <strong>2,000 patients per day</strong> over 360 operational days per year (7,20,000 patient orders annually).</li>
-    <li><strong>[ASSUMPTION-02] Front-Desk Inefficiency:</strong> Currently, 30% of patients call or walk in to check report status (600 patients/day × 4 mins = 40 staff hours/day × 360 days = 14,400 hours/year × ₹250/hr = <strong>₹36 Lakh/year</strong>).</li>
-    <li><strong>[ASSUMPTION-03] Paper Delivery Waste:</strong> 40% of reports (2,88,000 reports/year) are printed by hand and physically delivered at ₹12 per report, costing <strong>₹34.56 Lakh/year</strong>. Total existing operational waste equals <strong>₹70.56 Lakh per year</strong>.</li>
+    <li><strong>[ASSUMPTION-01] Daily Order Volume:</strong> The diagnostic chain processes <strong>2,000 patients per day</strong> across 360 operational days per year (7,20,000 orders annually).</li>
+    <li><strong>[ASSUMPTION-02] Front-Desk Inefficiency:</strong> 30% of patients call or visit for status inquiries: <code>600 inquiries/day × 4 mins = 40 staff hours/day × 360 days = 14,400 hours/year × ₹250/hr = ₹36 Lakh/year</code>.</li>
+    <li><strong>[ASSUMPTION-03] Paper Delivery Waste:</strong> 40% of reports are printed by hand and physically delivered: <code>2,88,000 reports × ₹12 = ₹34.56 Lakh/year</code>. Total annual operational waste equals <strong>₹70.56 Lakh per year</strong>.</li>
     <li><strong>[ASSUMPTION-04] Family Phone Sharing:</strong> In semi-urban and rural Andhra Pradesh, one registered mobile number frequently covers multi-generational families (elderly parents and children). The portal must support multi-order retrieval under one authenticated mobile number.</li>
-    <li><strong>[ASSUMPTION-05] Statutory Retention Windows:</strong> Patient links expire in <strong>72 hours</strong> under DPDP data minimization rules. Referring clinician consultation access is active for <strong>90 days</strong>.</li>
-    <li><strong>[ASSUMPTION-06] Budget & Delivery Milestone:</strong> Implementation budget of <strong>₹6.5 Lakh</strong> across a <strong>6-week rollout</strong>, targeting an <strong>80% digital adoption rate</strong> and <strong>60% reduction in status calls</strong> within 3 months.</li>
+    <li><strong>[ASSUMPTION-05] Statutory Retention Windows:</strong> Links expire in <strong>72 hours</strong> under DPDP data minimization rules. Referring clinician consultation access is bounded to <strong>90 days</strong>.</li>
+    <li><strong>[ASSUMPTION-06] Budget & Milestone Targets:</strong> ₹6.5 Lakh budget across a 6-week rollout, targeting an 80% digital adoption rate and 60% call reduction within 3 months.</li>
   </ul>
 
+  <!-- Section 3 -->
   <h2>3. System Architecture & Component Topology</h2>
+  <p>The system is organized into a modular three-tier architecture ensuring complete separation of clinical data, authentication, and presentation:</p>
+
   <pre><code>+-----------------------------------------------------------------------------------+
 |                                 CLIENT TIER                                       |
 |  (Vite + React 18 + Tailwind CSS + Lucide Icons + Responsive Glassmorphic UI)     |
@@ -330,13 +328,16 @@
 |  +------------------------+  +------------------------+  +---------------------+  |
 +-----------------------------------------------------------------------------------+</code></pre>
 
+  <!-- Section 4 -->
   <h2>4. Core Data Models</h2>
-  <p>The system defines clean, structured interfaces for Orders, Users, Audit Logs, and Callback Tasks:</p>
-  <pre><code>// 1. Diagnostic Order Entity (Order)
+  <p>The application defines strongly typed entities covering clinical orders, authenticated users, audit trails, and callback tasks:</p>
+
+  <pre><code>// 1. Diagnostic Order Entity
 interface DiagnosticOrder {
   orderId: string;              // e.g. "ORD-71204"
   patientName: string;          // e.g. "Lakshmi Prasanna K"
-  age: number; gender: 'Female' | 'Male';
+  age: number;
+  gender: 'Female' | 'Male';
   patientPhone: string;         // e.g. "+91 98765 43210"
   testName: string;             // e.g. "Complete Blood Picture (CBP)"
   parameter: string;            // e.g. "Haemoglobin"
@@ -344,61 +345,65 @@ interface DiagnosticOrder {
   unit: string;                 // e.g. "g/dL"
   referenceRange: string;       // e.g. "12.0 - 15.5"
   status: 'Ready' | 'Processing' | 'Critical';
-  isCritical: boolean;          // true if value crosses panic threshold
+  isCritical: boolean;          // true if value crosses biological panic threshold
   referringDoctor: string;      // e.g. "Dr. S. Ramanaiah"
   collectionCentre: string;     // e.g. "Bunder Road Centre, Vijayawada"
   createdAt: string;            // ISO 8601 timestamp
   signedByPathologist: string;  // e.g. "Dr. K. S. Murthy, MD (Pathology)"
 }
 
-// 2. User & Clinician Entity (User)
+// 2. User & Clinician Entity
 interface UserAccount {
-  id: string;                   // e.g. "USR-DOC-01"
-  name: string;                 // e.g. "Dr. S. Ramanaiah"
+  id: string;                   // Unique ID (e.g. "USR-DOC-01")
+  name: string;                 // Clinician or Staff name
   email: string;                // e.g. "ramanaiah@arogyalink.in"
-  passwordHash: string;         // Salted / Hash credential
+  passwordHash: string;         // Salted credential
   role: 'doctor' | 'staff';     // Strict Role-Based Access Control
-  doctorKey?: string;           // Normalization key for patient filtering
+  doctorKey?: string;           // Clinician mapping key for patient isolation
   specialty?: string;           // e.g. "General Physician", "Cardiologist"
   clinic?: string;              // e.g. "Coastal Health Clinic, Vijayawada"
 }
 
-// 3. Statutory DPDP Audit Event (AuditLog)
+// 3. Statutory DPDP Audit Event
 interface AuditLogEvent {
-  id: string;                   // e.g. "LOG-1001"
+  id: string;                   // Unique Audit Log ID (e.g. "LOG-1001")
   timestamp: string;            // ISO 8601 UTC timestamp
-  orderId: string;              // Diagnostic Order Reference
+  orderId: string;              // Order reference
   patientName: string;
-  maskedPhone: string;          // Masked format: "+91 98765 *****"
+  maskedPhone: string;          // Strictly masked: "+91 98765 *****"
   accessMethod: string;         // e.g. "Patient Mobile OTP Authentication"
   status: 'Authorized' | 'Denied';
 }</code></pre>
 
+  <!-- Section 5 -->
   <h2>5. Security, Cryptography & DPDP Act 2023 Compliance</h2>
   <ul>
-    <li><strong>72-Hour Signed Expiring Links (<code>tokenService.js</code>):</strong> Instead of sending unencrypted PDF attachments, the server creates cryptographically signed URLs using HMAC-SHA256:
+    <li><strong>72-Hour Signed Expiring Links (<code>tokenService.js</code>):</strong> Reports are never sent as raw attachments. The server issues cryptographically signed URLs using HMAC-SHA256:
       <br><code>Signature = HMAC-SHA256(Secret, orderId + ":" + expiryTimestamp)</code>.
-      Links self-expire precisely 72 hours from issuance. URL tampering immediately yields an <code>HTTP 401 Unauthorized</code>.
+      Links expire exactly 72 hours from issuance. Tampered parameters instantly fail hash validation and return an <code>HTTP 401 Unauthorized</code>.
     </li>
-    <li><strong>2-Factor Mobile OTP Gate:</strong> Entering the URL presents a 4-digit OTP challenge sent to the registered mobile number, ensuring possession of the link alone cannot leak medical data.</li>
-    <li><strong>Masked Personal Identifiers:</strong> In accordance with DPDP data minimization principles, phone numbers are masked across all public screens and audit logs (<code>+91 98765 *****</code>) to prevent identity harvesting.</li>
-    <li><strong>Immutable Statutory Audit Logging (<code>auditService.js</code>):</strong> Every access event—including SMS link dispatch, OTP verification, and report viewing—is immutably recorded with timestamps and masked credentials for regulatory inspection.</li>
+    <li><strong>2-Factor Mobile OTP Gate:</strong> Link possession alone does not grant access. Patients must solve a 4-digit OTP challenge sent to their registered mobile number before decrypting report data.</li>
+    <li><strong>Masked Personal Identifiers:</strong> In accordance with DPDP data minimization principles, mobile numbers are permanently masked across all screens, logs, and rosters (<code>+91 98765 *****</code>).</li>
+    <li><strong>Immutable Statutory Audit Logging (<code>auditService.js</code>):</strong> Every decryption, OTP challenge, and link resend event is appended to an immutable chronological ledger for statutory compliance review.</li>
   </ul>
 
+  <!-- Section 6 -->
   <h2>6. Clinical AI Mechanism & Patient Safety Safeguards</h2>
-  <div class="emergency">
-    <strong>🚨 The #1 Safety Rule (Critical Potassium Safety Intercept):</strong><br>
-    For life-threatening panic values—specifically serum Potassium ≥ 6.0 mmol/L (e.g. Farzana Begum, 6.8 mmol/L):
-    <ul>
+  
+  <div class="alert-box">
+    <strong class="title">🚨 The #1 Safety Rule: Critical Potassium Panic Intercept</strong>
+    For life-threatening results—specifically serum Potassium ≥ 6.0 mmol/L (e.g. Farzana Begum, 6.8 mmol/L):
+    <ul style="margin-top: 6px; margin-bottom: 0;">
       <li><strong>Automated AI summaries are strictly WITHHELD and BLOCKED.</strong></li>
-      <li>An unmissable, high-contrast <strong>Red Emergency Alert Banner</strong> is rendered, advising the patient that urgent clinical callbacks are in progress and displaying emergency hospital contacts.</li>
+      <li>An unmissable, high-contrast <strong>Red Emergency Alert Banner</strong> is displayed, directing the patient to hospital care.</li>
       <li>The server automatically creates an <strong>Urgent Doctor Callback Task</strong> on the Front-Desk Console. Front-desk personnel must call the referring doctor directly and log clinical resolution notes before resolving.</li>
     </ul>
   </div>
 
-  <p><strong>Clinical Rule Triggers vs LLM Speculation:</strong> Out-of-range flags are derived deterministically using the official report's biological reference ranges, never from speculative model guesses. Summaries use locked, pre-validated clinical templates for the 30 most common diagnostic investigations (including Haemoglobin, Fasting Glucose, LDL Cholesterol, TSH, and Platelet Count).</p>
-  <p><strong>Multilingual Translation Engine:</strong> Synthesizes plain-language summaries across 26+ Indian languages, with full native support for Telugu (తెలుగు), Tenglish, Hinglish, and Hindi, backed by an in-app doubt chat assistant and a closed-loop Pathologist Audit Queue (50 summaries/week quota).</p>
+  <p><strong>Rule-Derived Triggers vs Generative Model Hallucinations:</strong> Out-of-range flags are derived deterministically using the official report's biological reference ranges, never from speculative LLM prompts. Plain-language summaries utilize locked, pre-validated clinical templates for the 30 most common diagnostic investigations (including Haemoglobin, Fasting Glucose, LDL Cholesterol, TSH, and Platelet Count).</p>
+  <p><strong>Multilingual Translation Engine:</strong> Provides immediate translations across 26+ Indian languages, with primary pre-compiled templates for <strong>Telugu (తెలుగు)</strong>, <strong>Tenglish</strong> (Telugu in Roman script), <strong>Hinglish</strong>, <strong>Hindi (हिंदी)</strong>, and <strong>English</strong>, backed by an in-app doubt chat assistant and a closed-loop Pathologist Audit Queue (50 summaries/week quota).</p>
 
+  <!-- Section 7 -->
   <h2>7. UI/UX Decisions & Clinical Accessibility</h2>
   <ul>
     <li><strong>Medical Aurora Ambient Background:</strong> Soft floating emerald and teal orbs with a geometric dot matrix pattern replace sterile white backgrounds.</li>
@@ -407,11 +412,12 @@ interface AuditLogEvent {
     <li><strong>Accessible Printable Report:</strong> Formatted to match standard pathology paper with biological reference ranges, doctor signatures, and a dedicated <code>@media print</code> PDF stylesheet.</li>
   </ul>
 
+  <!-- Section 8 -->
   <h2>8. What Was Cut & What We Would Do Next</h2>
-  <p><strong>What Was Cut (Per Problem Statement Scope Boundaries):</strong></p>
+  <p><strong>What Was Cut (Per Problem Statement Out-of-Scope Boundaries):</strong></p>
   <ul>
-    <li><strong>Direct Changes to the Desktop LIS:</strong> Altering the legacy desktop LIS was declared strictly out of scope. We implemented a non-invasive CSV batch import watcher instead.</li>
-    <li><strong>Online Test Booking & Payment Gateway:</strong> Retained focus on post-diagnostic report delivery and patient safety rather than commercial e-commerce booking.</li>
+    <li><strong>Direct Changes to the Desktop LIS:</strong> Modifying the legacy desktop LIS was declared strictly out of scope. We implemented a non-invasive CSV batch import watcher instead.</li>
+    <li><strong>Online Test Booking & Payment Gateways:</strong> Retained focus on post-diagnostic report delivery and patient safety rather than commercial e-commerce booking.</li>
     <li><strong>Home Sample Collection Routing:</strong> Kept phlebotomist GPS dispatch out of scope to prioritize clinical safety and DPDP compliance.</li>
   </ul>
   <p><strong>What We Would Do Next (Production Roadmap):</strong></p>
@@ -422,6 +428,7 @@ interface AuditLogEvent {
     <li><strong>Native Mobile App with Biometric Auth:</strong> Package the responsive React application into an Android APK with fingerprint/FaceID biometrics for recurring chronic patients.</li>
   </ul>
 
+  <!-- Section 9 -->
   <h2>9. Architectural Trade-offs & Engineering Justifications</h2>
   <table>
     <thead>
@@ -460,6 +467,7 @@ interface AuditLogEvent {
     </tbody>
   </table>
 
+  <!-- Section 10 -->
   <h2>10. Verification & Test Suite Results</h2>
   <p>The project includes an automated test runner suite executed natively via Node.js:</p>
   <pre><code>node --test tests/api.test.js</code></pre>
@@ -479,13 +487,14 @@ interface AuditLogEvent {
 
 11 tests passed | 0 failed | 100% pass rate</code></pre>
 
+  <!-- Section 11 -->
   <h2>11. Conclusion</h2>
   <p>ArogyaLink successfully transforms Company A's laboratory network into a modern, compliant, and clinically responsible diagnostic delivery ecosystem. By pairing <strong>statutory DPDP 2023 security</strong> with <strong>physician-guided AI summaries</strong> and <strong>uncompromising clinical safety intercepts</strong>, the platform eliminates ₹70.56 Lakh in annual operational waste while protecting patient privacy across Coastal Andhra Pradesh.</p>
 
-  <div class="callout">
-    <strong>Project Artifact Links:</strong><br>
-    • Public GitHub Repository: <a href="https://github.com/danimadhavapuri/ArogyaLink.git">https://github.com/danimadhavapuri/ArogyaLink.git</a><br>
-    • Live Application Deployment: <a href="https://arogyalink-sc22.onrender.com">https://arogyalink-sc22.onrender.com</a>
+  <div class="callout-card">
+    <strong class="title">Project Artifact Links:</strong>
+    • Public GitHub Repository: <a href="https://github.com/danimadhavapuri/ArogyaLink.git" target="_blank">https://github.com/danimadhavapuri/ArogyaLink.git</a><br>
+    • Live Application Deployment: <a href="https://arogyalink-sc22.onrender.com" target="_blank">https://arogyalink-sc22.onrender.com</a>
   </div>
 
 </body>
